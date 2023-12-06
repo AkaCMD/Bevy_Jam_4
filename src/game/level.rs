@@ -1,7 +1,7 @@
-use std::fs;
+use std::{fs, ops::Deref};
 
 use super::{player::Duck, ui::Won, *};
-use bevy::window::PrimaryWindow;
+use bevy::{window::PrimaryWindow, render::view::window};
 
 pub struct Plugin;
 
@@ -37,8 +37,6 @@ impl Default for BreadCount {
     }
 }
 // TODO: Layers of objects (z axis)
-// TODO: Press R to reset
-// TODO: Refactor
 enum ObjectType {
     Wall,
     Ice,
@@ -88,6 +86,7 @@ fn spawn_level(
             &asset_server,
             &mut bread_count,
             &mut events,
+            false,
         );
         commands.insert_resource(level);
     }
@@ -100,17 +99,18 @@ fn update_level(
     mut events: EventWriter<Won>,
     // query
     window_query: Query<&Window, With<PrimaryWindow>>,
-    object_query: Query<Entity, With<Object>>,
+    object_query: Query<Entity, (With<Object>, Without<Duck>)>,
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
     mut bread_count: ResMut<BreadCount>,
 ) {
     for _ in events_update.read() {
-        // TODO: do not despawn ducks, update the translations of ducks
+        // Do not despawn ducks, update the translations of ducks
         for object in &object_query {
             commands.entity(object).despawn();
         }
+
         spawn_sprites(
             &mut commands,
             &level.0,
@@ -118,6 +118,7 @@ fn update_level(
             &asset_server,
             &mut bread_count,
             &mut events,
+            true,
         );
     }
 }
@@ -181,6 +182,8 @@ fn spawn_sprites(
     bread_count: &mut ResMut<BreadCount>,
     // event
     events: &mut EventWriter<Won>,
+    // when updates, do not respawn ducks
+    is_update: bool,
 ) {
     bread_count.0 = 0;
     let window = window_query.get_single().unwrap();
@@ -218,12 +221,15 @@ fn spawn_sprites(
                         asset_server.load("sprites/ice.png"),
                     );
                     //events.send(SpawnDuck((col_index, row_index)));
+                    if !is_update {
                     spawn_duck(
                         &mut commands,
                         position,
                         asset_server.load("sprites/duck.png"),
                         (col_index, row_index),
                     );
+                    }
+
                 }
                 ObjectType::BreadOnIce => {
                     bread_count.0 += 1;

@@ -19,6 +19,10 @@ pub struct Duck {
     pub logic_position: (usize, usize),
 }
 
+// the chosen duck
+#[derive(Component)]
+pub struct Player;
+
 #[derive(Event, Default)]
 pub struct SpawnDuck(pub (usize, usize));
 
@@ -30,11 +34,10 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
     });
 }
 
-// TODO: select the duck as player
 // TODO: implement the game logic
 fn player_movement(
     // query
-    mut player_query: Query<(&mut Sprite, &mut Duck), With<Duck>>,
+    mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck), With<Player>>,
     // event
     mut events: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -42,14 +45,14 @@ fn player_movement(
     // resource
     key_board_input: Res<Input<KeyCode>>,
     level: ResMut<level::Level>,
-    asset_server: Res<AssetServer>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok((mut sprite, mut duck)) = player_query.get_single_mut() {
+    if let Ok((mut transform, mut sprite, mut duck)) = player_query.get_single_mut() {
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
             direction = Direction::Left;
-            sprite.flip_x = false; // TODO: Re-implement it
+            sprite.flip_x = false;
         }
         if key_board_input.just_pressed(KeyCode::Right) || key_board_input.just_pressed(KeyCode::D)
         {
@@ -67,6 +70,10 @@ fn player_movement(
 
         // Update object positions
         duck.logic_position = end_position;
+        // Update the translation of ducks
+        let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
+        transform.translation = Vec3::new(v3.x, v3.y, 1.0);
+        
 
         if direction != utils::Direction::None {
             // play quark sound

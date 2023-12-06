@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod audio;
+mod cursor;
 mod level;
 mod player;
 mod ui;
@@ -15,6 +16,12 @@ pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((player::Plugin, audio::Plugin, level::Plugin, ui::Plugin));
+        app.add_plugins((
+            player::Plugin,
+            audio::Plugin,
+            level::Plugin,
+            ui::Plugin,
+            cursor::Plugin,
+        ));
     }
 }
