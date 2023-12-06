@@ -1,6 +1,6 @@
 use std::fs;
 
-use super::{player::Duck, *};
+use super::{player::Duck, ui::Won, *};
 use bevy::window::PrimaryWindow;
 
 pub struct Plugin;
@@ -13,18 +13,12 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<BreadCount>()
             .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
-            .add_systems(Update, (print_level, update_level));
+            .add_systems(Update, (print_level, update_level, level_restart));
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct Level(pub Vec<Vec<char>>);
-
-impl Default for Level {
-    fn default() -> Self {
-        Level(Vec::new())
-    }
-}
 
 #[derive(Resource)]
 pub struct CurrentLevelIndex(i32);
@@ -72,161 +66,66 @@ fn load_level_from_file(file_path: &str) -> Result<Level, std::io::Error> {
     Ok(Level(level_data))
 }
 
-pub fn spawn_level(
+fn spawn_level(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // query
     window_query: Query<&Window, With<PrimaryWindow>>,
+    // resource
+    asset_server: Res<AssetServer>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
+    // event
+    mut events: EventWriter<Won>,
 ) {
-    bread_count.0 = 0;
-    let window = window_query.get_single().unwrap();
     // Load the level from a .txt file
     if let Ok(level) =
         load_level_from_file(format!("assets/levels/level{}.txt", level_index.0).as_str())
     {
-        // spawn the sprites
-        for (row_index, row) in level.0.iter().enumerate() {
-            for (col_index, &ch) in row.iter().enumerate() {
-                let position = logic_position_to_translation((col_index, row_index), window);
-                let object_type = match ch {
-                    '@' => ObjectType::Wall,
-                    '#' => ObjectType::Ice,
-                    'D' => ObjectType::DuckOnIce,
-                    'B' => ObjectType::BreadOnIce,
-                    _ => continue,
-                };
-
-                match object_type {
-                    ObjectType::Wall => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/wall.png"),
-                        );
-                    }
-                    ObjectType::Ice => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                    }
-                    ObjectType::DuckOnIce => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                        //events.send(SpawnDuck((col_index, row_index)));
-                        spawn_duck(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/duck.png"),
-                            (col_index, row_index),
-                        );
-                    }
-                    ObjectType::BreadOnIce => {
-                        bread_count.0 += 1;
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                        spawn_upper_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/bread.png"),
-                        );
-                    }
-                };
-            }
-        }
+        spawn_sprites(
+            &mut commands,
+            &level.0,
+            &window_query,
+            &asset_server,
+            &mut bread_count,
+            &mut events,
+        );
         commands.insert_resource(level);
     }
 }
 
-pub fn update_level(
+fn update_level(
     mut commands: Commands,
-    level: Res<Level>,
+    // event
     mut events_update: EventReader<UpdateLevel>,
+    mut events: EventWriter<Won>,
+    // query
     window_query: Query<&Window, With<PrimaryWindow>>,
     object_query: Query<Entity, With<Object>>,
-    duck_query: Query<Entity, With<Duck>>,
+    // resource
     asset_server: Res<AssetServer>,
+    level: Res<Level>,
+    mut bread_count: ResMut<BreadCount>,
 ) {
     for _ in events_update.read() {
         // TODO: do not despawn ducks, update the translations of ducks
         for object in &object_query {
             commands.entity(object).despawn();
         }
-        for duck in &duck_query {
-            commands.entity(duck).despawn();
-        }
-        let window = window_query.get_single().unwrap();
-        // spawn the sprites
-        for (row_index, row) in level.0.iter().enumerate() {
-            for (col_index, &ch) in row.iter().enumerate() {
-                let position = logic_position_to_translation((col_index, row_index), window);
-                let object_type = match ch {
-                    '@' => ObjectType::Wall,
-                    '#' => ObjectType::Ice,
-                    'D' => ObjectType::DuckOnIce,
-                    'B' => ObjectType::BreadOnIce,
-                    _ => continue,
-                };
-
-                match object_type {
-                    ObjectType::Wall => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/wall.png"),
-                        );
-                    }
-                    ObjectType::Ice => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                    }
-                    ObjectType::DuckOnIce => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                        //events.send(SpawnDuck((col_index, row_index)));
-                        spawn_duck(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/duck.png"),
-                            (col_index, row_index),
-                        );
-                    }
-                    ObjectType::BreadOnIce => {
-                        spawn_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/ice.png"),
-                        );
-                        spawn_upper_object(
-                            &mut commands,
-                            position,
-                            asset_server.load("sprites/bread.png"),
-                        );
-                    }
-                };
-            }
-        }
+        spawn_sprites(
+            &mut commands,
+            &level.0,
+            &window_query,
+            &asset_server,
+            &mut bread_count,
+            &mut events,
+        );
     }
 }
 
 fn spawn_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) {
     commands.spawn((
         SpriteBundle {
-            texture: sprite.into(),
+            texture: sprite,
             transform: Transform {
                 translation: position,
                 rotation: Quat::IDENTITY,
@@ -241,7 +140,7 @@ fn spawn_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) 
 fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) {
     commands.spawn((
         SpriteBundle {
-            texture: sprite.into(),
+            texture: sprite,
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 1.0),
                 rotation: Quat::IDENTITY,
@@ -266,13 +165,86 @@ fn spawn_duck(
                 rotation: Quat::IDENTITY,
                 scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
             },
-            texture: sprite.into(),
+            texture: sprite,
             ..default()
         },
-        Duck {
-            logic_position: logic_position,
-        },
+        Duck { logic_position },
+        Object {},
     ));
+}
+
+fn spawn_sprites(
+    mut commands: &mut Commands,
+    level: &Vec<Vec<char>>,
+    window_query: &Query<&Window, With<PrimaryWindow>>,
+    asset_server: &Res<AssetServer>,
+    bread_count: &mut ResMut<BreadCount>,
+    // event
+    events: &mut EventWriter<Won>,
+) {
+    bread_count.0 = 0;
+    let window = window_query.get_single().unwrap();
+    // spawn the sprites
+    for (row_index, row) in level.iter().enumerate() {
+        for (col_index, &ch) in row.iter().enumerate() {
+            let position = logic_position_to_translation((col_index, row_index), window);
+            let object_type = match ch {
+                '@' => ObjectType::Wall,
+                '#' => ObjectType::Ice,
+                'D' => ObjectType::DuckOnIce,
+                'B' => ObjectType::BreadOnIce,
+                _ => continue,
+            };
+
+            match object_type {
+                ObjectType::Wall => {
+                    spawn_object(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/wall.png"),
+                    );
+                }
+                ObjectType::Ice => {
+                    spawn_object(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/ice.png"),
+                    );
+                }
+                ObjectType::DuckOnIce => {
+                    spawn_object(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/ice.png"),
+                    );
+                    //events.send(SpawnDuck((col_index, row_index)));
+                    spawn_duck(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/duck.png"),
+                        (col_index, row_index),
+                    );
+                }
+                ObjectType::BreadOnIce => {
+                    bread_count.0 += 1;
+                    spawn_object(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/ice.png"),
+                    );
+                    spawn_upper_object(
+                        &mut commands,
+                        position,
+                        asset_server.load("sprites/bread.png"),
+                    );
+                }
+            };
+        }
+    }
+
+    if bread_count.0 == 0 {
+        events.send(Won);
+    }
 }
 
 pub fn print_level(
@@ -288,5 +260,33 @@ pub fn print_level(
             println!();
         }
         info!("BreadCount: {}", bread_count.0);
+    }
+}
+
+fn level_restart(
+    mut commands: Commands,
+    // query
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    object_query: Query<Entity, With<Object>>,
+    // resource
+    input: Res<Input<KeyCode>>,
+    asset_server: Res<AssetServer>,
+    bread_count: ResMut<BreadCount>,
+    level_index: Res<CurrentLevelIndex>,
+    // event
+    events: EventWriter<Won>,
+) {
+    if input.just_pressed(KeyCode::R) {
+        for object in &object_query {
+            commands.entity(object).despawn();
+        }
+        spawn_level(
+            commands,
+            window_query,
+            asset_server,
+            level_index,
+            bread_count,
+            events,
+        );
     }
 }

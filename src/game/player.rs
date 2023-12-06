@@ -1,7 +1,6 @@
 use super::{
     audio::PlaySFX,
-    level::{BreadCount, PrintLevel, UpdateLevel},
-    ui::Won,
+    level::{PrintLevel, UpdateLevel},
     *,
 };
 use bevy::window::PrimaryWindow;
@@ -33,18 +32,19 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
 
 // TODO: select the duck as player
 // TODO: implement the game logic
-// TODO: Refactor
 fn player_movement(
-    key_board_input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck), With<Duck>>,
+    // query
+    mut player_query: Query<(&mut Sprite, &mut Duck), With<Duck>>,
+    // event
     mut events: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
-    mut events_win: EventWriter<Won>,
-    mut level: ResMut<level::Level>,
     mut events_1: EventWriter<PrintLevel>,
-    mut bread_count: ResMut<BreadCount>,
+    // resource
+    key_board_input: Res<Input<KeyCode>>,
+    level: ResMut<level::Level>,
+    asset_server: Res<AssetServer>,
 ) {
-    if let Ok((mut transform, mut sprite, mut duck)) = player_query.get_single_mut() {
+    if let Ok((mut sprite, mut duck)) = player_query.get_single_mut() {
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
@@ -63,13 +63,7 @@ fn player_movement(
             direction = Direction::Down;
         }
 
-        let end_position = slip(
-            level,
-            duck.logic_position,
-            direction,
-            bread_count,
-            events_win,
-        );
+        let end_position = slip(duck.logic_position, direction, level);
 
         // Update object positions
         duck.logic_position = end_position;
@@ -87,29 +81,23 @@ fn player_movement(
 // Wall: @
 // Bread: B
 fn slip(
-    mut level: ResMut<level::Level>,
     logic_position: (usize, usize), // (col, row)
     direction: utils::Direction,
-    mut bread_count: ResMut<BreadCount>,
-    mut events: EventWriter<Won>,
+    // resource
+    mut level: ResMut<level::Level>,
 ) -> (usize, usize) {
     // Up: row--
     // Down: row++
     // Left: col--
     // Right: col++
     let rows = level.0.len();
-    let mut cols = level.0[logic_position.1].len();
-    let mut position = logic_position.clone();
+    let cols = level.0[logic_position.1].len();
+    let mut position = logic_position;
     match direction {
         utils::Direction::Up => {
             while position.1 > 0 && level.0[position.1 - 1][position.0] != '@' {
                 position.1 -= 1;
                 if level.0[position.1][position.0] == 'B' {
-                    bread_count.0 -= 1;
-                    // Win condition: no bread left
-                    if bread_count.0 == 0 {
-                        events.send(Won);
-                    }
                     break;
                 }
             }
@@ -118,11 +106,6 @@ fn slip(
             while position.1 < rows - 1 && level.0[position.1 + 1][position.0] != '@' {
                 position.1 += 1;
                 if level.0[position.1][position.0] == 'B' {
-                    bread_count.0 -= 1;
-                    // Win condition: no bread left
-                    if bread_count.0 == 0 {
-                        events.send(Won);
-                    }
                     break;
                 }
             }
@@ -131,11 +114,6 @@ fn slip(
             while position.0 > 0 && level.0[position.1][position.0 - 1] != '@' {
                 position.0 -= 1;
                 if level.0[position.1][position.0] == 'B' {
-                    bread_count.0 -= 1;
-                    // Win condition: no bread left
-                    if bread_count.0 == 0 {
-                        events.send(Won);
-                    }
                     break;
                 }
             }
@@ -144,11 +122,6 @@ fn slip(
             while position.0 < cols - 1 && level.0[position.1][position.0 + 1] != '@' {
                 position.0 += 1;
                 if level.0[position.1][position.0] == 'B' {
-                    bread_count.0 -= 1;
-                    // Win condition: no bread left
-                    if bread_count.0 == 0 {
-                        events.send(Won);
-                    }
                     break;
                 }
             }

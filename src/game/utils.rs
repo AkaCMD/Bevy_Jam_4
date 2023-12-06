@@ -11,7 +11,7 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn to_vector(&self) -> Vec3 {
+    pub fn to_vector(self) -> Vec3 {
         match self {
             Direction::Up => Vec3::new(0.0, 1.0, 0.0),
             Direction::Down => Vec3::new(0.0, -1.0, 0.0),
