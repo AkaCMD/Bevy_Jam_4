@@ -5,7 +5,7 @@ use super::*;
 pub struct Plugin;
 
 #[derive(Resource)]
-struct sfx(Handle<AudioSource>);
+struct Sfx(Handle<AudioSource>);
 
 #[derive(Event, Default)]
 pub struct PlaySFX;
@@ -33,10 +33,10 @@ fn load_sfx(mut commands: Commands, asset_server: Res<AssetServer>) {
     let quark_sound = asset_server.load("audio/quark.wav");
 
     // Insert the Audio resource with the loaded sound effect
-    commands.insert_resource(sfx(quark_sound));
+    commands.insert_resource(Sfx(quark_sound));
 }
 
-fn play_sfx(sfx_assets: Res<sfx>, mut events: EventReader<PlaySFX>, mut commands: Commands) {
+fn play_sfx(sfx_assets: Res<Sfx>, mut events: EventReader<PlaySFX>, mut commands: Commands) {
     for _ in events.read() {
         let quark_sound = sfx_assets.0.clone();
         commands.spawn(AudioBundle {

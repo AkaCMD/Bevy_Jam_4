@@ -11,9 +11,9 @@ impl bevy::app::Plugin for Plugin {
 fn show_title(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(
         TextBundle::from_section(
-            "QUARK ON ICE!",
+            "Quark On Ice!",
             TextStyle {
-                font: asset_server.load("fonts/FROGBLOCK-V2.1-by-Polyducks.ttf"),
+                font: asset_server.load("fonts/NotJamChunky8.ttf"),
                 font_size: 30.0,
                 ..default()
             },
