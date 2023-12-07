@@ -1,7 +1,7 @@
-use std::{fs, ops::Deref};
+use std::fs;
 
 use super::{player::Duck, ui::Won, *};
-use bevy::{window::PrimaryWindow, render::view::window};
+use bevy::window::PrimaryWindow;
 
 pub struct Plugin;
 
@@ -138,7 +138,7 @@ fn spawn_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) 
     ));
 }
 
-fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) {
+pub fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) {
     commands.spawn((
         SpriteBundle {
             texture: sprite,
@@ -222,14 +222,13 @@ fn spawn_sprites(
                     );
                     //events.send(SpawnDuck((col_index, row_index)));
                     if !is_update {
-                    spawn_duck(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/duck.png"),
-                        (col_index, row_index),
-                    );
+                        spawn_duck(
+                            &mut commands,
+                            position,
+                            asset_server.load("sprites/duck.png"),
+                            (col_index, row_index),
+                        );
                     }
-
                 }
                 ObjectType::BreadOnIce => {
                     bread_count.0 += 1;

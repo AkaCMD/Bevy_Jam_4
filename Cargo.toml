@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = {version = "0.12.1", features = ["wav", "wayland"]}
+bevy_tweening = "0.9"
 
 [workspace]
 resolver = "2"

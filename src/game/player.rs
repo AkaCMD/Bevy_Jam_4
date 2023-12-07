@@ -34,7 +34,6 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
     });
 }
 
-// TODO: implement the game logic
 fn player_movement(
     // query
     mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck), With<Player>>,
@@ -73,7 +72,6 @@ fn player_movement(
         // Update the translation of ducks
         let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
         transform.translation = Vec3::new(v3.x, v3.y, 1.0);
-        
 
         if direction != utils::Direction::None {
             // play quark sound
@@ -102,7 +100,10 @@ fn slip(
     let mut position = logic_position;
     match direction {
         utils::Direction::Up => {
-            while position.1 > 0 && level.0[position.1 - 1][position.0] != '@' {
+            while position.1 > 0
+                && level.0[position.1 - 1][position.0] != '@'
+                && level.0[position.1 - 1][position.0] != 'D'
+            {
                 position.1 -= 1;
                 if level.0[position.1][position.0] == 'B' {
                     break;
@@ -110,7 +111,10 @@ fn slip(
             }
         }
         utils::Direction::Down => {
-            while position.1 < rows - 1 && level.0[position.1 + 1][position.0] != '@' {
+            while position.1 < rows - 1
+                && level.0[position.1 + 1][position.0] != '@'
+                && level.0[position.1 + 1][position.0] != 'D'
+            {
                 position.1 += 1;
                 if level.0[position.1][position.0] == 'B' {
                     break;
@@ -118,7 +122,10 @@ fn slip(
             }
         }
         utils::Direction::Left => {
-            while position.0 > 0 && level.0[position.1][position.0 - 1] != '@' {
+            while position.0 > 0
+                && level.0[position.1][position.0 - 1] != '@'
+                && level.0[position.1][position.0 - 1] != 'D'
+            {
                 position.0 -= 1;
                 if level.0[position.1][position.0] == 'B' {
                     break;
@@ -126,7 +133,10 @@ fn slip(
             }
         }
         utils::Direction::Right => {
-            while position.0 < cols - 1 && level.0[position.1][position.0 + 1] != '@' {
+            while position.0 < cols - 1
+                && level.0[position.1][position.0 + 1] != '@'
+                && level.0[position.1][position.0 + 1] != 'D'
+            {
                 position.0 += 1;
                 if level.0[position.1][position.0] == 'B' {
                     break;

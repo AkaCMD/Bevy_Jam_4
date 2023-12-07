@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_tweening::TweeningPlugin;
 
 mod game;
 
@@ -19,5 +20,6 @@ fn main() {
                 .set(ImagePlugin::default_nearest()), // All textures are pixelated
         )
         .add_plugins(game::Plugin)
+        .add_plugins(TweeningPlugin)
         .run();
 }
