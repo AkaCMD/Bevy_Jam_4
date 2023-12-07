@@ -13,7 +13,7 @@ impl bevy::app::Plugin for Plugin {
 fn show_title(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(
         TextBundle::from_section(
-            "Quark On Ice!",
+            "QUARK!!! on ICE",
             TextStyle {
                 font: asset_server.load("fonts/NotJamChunky8.ttf"),
                 font_size: 30.0,

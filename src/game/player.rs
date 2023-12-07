@@ -42,9 +42,9 @@ fn player_movement(
     // query
     mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck, Entity), With<Player>>,
     // event
-    mut events: EventWriter<PlaySFX>,
+    mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
-    mut events_1: EventWriter<PrintLevel>,
+    mut events_print: EventWriter<PrintLevel>,
     // resource
     key_board_input: Res<Input<KeyCode>>,
     level: ResMut<level::Level>,
@@ -90,8 +90,8 @@ fn player_movement(
             //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
 
             // play quark sound
-            events.send(PlaySFX);
-            events_1.send(PrintLevel);
+            events_sfx.send(PlaySFX);
+            events_print.send(PrintLevel);
             events_update.send(UpdateLevel);
         }
     }
