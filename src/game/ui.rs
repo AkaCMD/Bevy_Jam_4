@@ -3,13 +3,14 @@ pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (show_title, show_level_title))
+        app.add_systems(Startup, (show_title_and_name, show_level_title, show_hints))
             .add_event::<Won>()
             .add_systems(Update, (won, update_level_title, next_level_button));
     }
 }
 
-fn show_title(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // game title
     commands.spawn(
         TextBundle::from_section(
             "QUARK!!! on ICE",
@@ -23,6 +24,25 @@ fn show_title(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
+            right: Val::Px(10.0),
+            ..default()
+        }),
+    );
+
+    // author name
+    commands.spawn(
+        TextBundle::from_section(
+            "a game by Minda Chen",
+            TextStyle {
+                font: asset_server.load("fonts/NotJamChunky8.ttf"),
+                font_size: 20.0,
+                ..default()
+            },
+        )
+        .with_text_alignment(TextAlignment::Right)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(50.0),
             right: Val::Px(10.0),
             ..default()
         }),
@@ -55,6 +75,31 @@ fn show_level_title(
         }),
         LevelTitle,
     ));
+}
+
+// HINTS:
+// Mouse click to choose the duck
+// WASD to move
+// R to reset
+// One duck, one bread
+fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(
+        TextBundle::from_section(
+            "Click to choose the duck\nWASD to move\nR to reset\nOne duck, one bread",
+            TextStyle {
+                font: asset_server.load("fonts/NotJamChunky8.ttf"),
+                font_size: 20.0,
+                ..default()
+            },
+        )
+        .with_text_alignment(TextAlignment::Right)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: Val::Px(300.0),
+            right: Val::Px(10.0),
+            ..default()
+        }),
+    );
 }
 
 fn update_level_title(
