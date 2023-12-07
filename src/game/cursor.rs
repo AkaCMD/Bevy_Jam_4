@@ -1,4 +1,4 @@
-use super::{player::Duck, *, level::spawn_upper_object};
+use super::{level::spawn_upper_object, player::Duck, *};
 use crate::game::player::Player;
 use bevy::{input::mouse::MouseButtonInput, window::PrimaryWindow};
 
@@ -55,10 +55,18 @@ fn click_detection(
                     commands.entity(entity).insert(Player);
                     // Clear the previous player
                     for entity in player_query.iter() {
-                       commands.entity(entity).remove::<Player>();
+                        commands.entity(entity).remove::<Player>();
                     }
                 }
-                spawn_upper_object(&mut commands, Vec3 { x: cursor_position.0.x, y: cursor_position.0.y, z: 0.0 }, asset_server.load("sprites/debug.png"));
+                spawn_upper_object(
+                    &mut commands,
+                    Vec3 {
+                        x: cursor_position.0.x,
+                        y: cursor_position.0.y,
+                        z: 0.0,
+                    },
+                    asset_server.load("sprites/debug.png"),
+                );
                 //info!("Duck pos: {:?}", duck_position);
                 //info!("Cursor pos: {:?}", cursor_position.0);
                 //info!("Distance: {}", cursor_position.0.distance(duck_position));

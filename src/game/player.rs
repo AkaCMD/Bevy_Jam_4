@@ -20,6 +20,7 @@ impl bevy::app::Plugin for Plugin {
 #[derive(Component)]
 pub struct Duck {
     pub logic_position: (usize, usize),
+    pub is_full: bool, // one duck, one bread
 }
 
 // the chosen duck
@@ -41,6 +42,7 @@ fn player_movement(
     mut commands: Commands,
     // query
     mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck, Entity), With<Player>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     // event
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -48,9 +50,8 @@ fn player_movement(
     // resource
     key_board_input: Res<Input<KeyCode>>,
     level: ResMut<level::Level>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok((mut transform, mut sprite, mut duck, entity)) = player_query.get_single_mut() {
+    if let Ok((transform, mut sprite, mut duck, entity)) = player_query.get_single_mut() {
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
@@ -69,7 +70,18 @@ fn player_movement(
             direction = Direction::Down;
         }
         if direction != utils::Direction::None {
-            let end_position = slip(duck.logic_position, direction, level);
+            let duck_is_full_before = duck.is_full;
+            let end_position = slip(&mut duck, direction, level);
+            let duck_is_full_after = duck.is_full;
+
+            // TODO: fix it, delay it
+            if !duck_is_full_before && duck_is_full_after {
+                // play eat sound
+                events_sfx.send(PlaySFX {
+                    path: "audio/eat.ogg".to_string(),
+                    volume: bevy::audio::Volume::new_absolute(1.0),
+                });
+            }
 
             // Update object positions
             duck.logic_position = end_position;
@@ -85,23 +97,27 @@ fn player_movement(
                 },
             )
             .with_repeat_count(1);
+
             commands.entity(entity).insert(Animator::new(tween));
             //let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
             //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
 
             // play quark sound
-            events_sfx.send(PlaySFX);
+            events_sfx.send(PlaySFX {
+                path: "audio/quark.wav".to_string(),
+                volume: bevy::audio::Volume::new_absolute(0.5),
+            });
             events_print.send(PrintLevel);
             events_update.send(UpdateLevel);
         }
     }
 }
 
-// Slip until hit the wall or bread
+// Slip until hitting the wall or bread
 // Wall: @
 // Bread: B
 fn slip(
-    logic_position: (usize, usize), // (col, row)
+    duck: &mut Duck, // logic position: (col, row)
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
@@ -111,6 +127,7 @@ fn slip(
     // Left: col--
     // Right: col++
     let rows = level.0.len();
+    let logic_position = duck.logic_position;
     let cols = level.0[logic_position.1].len();
     let mut position = logic_position;
     match direction {
@@ -118,9 +135,11 @@ fn slip(
             while position.1 > 0
                 && level.0[position.1 - 1][position.0] != '@'
                 && level.0[position.1 - 1][position.0] != 'D'
+                && (!duck.is_full || level.0[position.1 - 1][position.0] != 'B')
             {
                 position.1 -= 1;
                 if level.0[position.1][position.0] == 'B' {
+                    duck.is_full = true;
                     break;
                 }
             }
@@ -129,9 +148,11 @@ fn slip(
             while position.1 < rows - 1
                 && level.0[position.1 + 1][position.0] != '@'
                 && level.0[position.1 + 1][position.0] != 'D'
+                && (!duck.is_full || level.0[position.1 + 1][position.0] != 'B')
             {
                 position.1 += 1;
                 if level.0[position.1][position.0] == 'B' {
+                    duck.is_full = true;
                     break;
                 }
             }
@@ -140,9 +161,11 @@ fn slip(
             while position.0 > 0
                 && level.0[position.1][position.0 - 1] != '@'
                 && level.0[position.1][position.0 - 1] != 'D'
+                && (!duck.is_full || level.0[position.1][position.0 - 1] != 'B')
             {
                 position.0 -= 1;
                 if level.0[position.1][position.0] == 'B' {
+                    duck.is_full = true;
                     break;
                 }
             }
@@ -151,9 +174,11 @@ fn slip(
             while position.0 < cols - 1
                 && level.0[position.1][position.0 + 1] != '@'
                 && level.0[position.1][position.0 + 1] != 'D'
+                && (!duck.is_full || level.0[position.1][position.0 + 1] != 'B')
             {
                 position.0 += 1;
                 if level.0[position.1][position.0] == 'B' {
+                    duck.is_full = true;
                     break;
                 }
             }

@@ -13,7 +13,10 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<BreadCount>()
             .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
-            .add_systems(Update, (print_level, update_level, level_restart));
+            .add_systems(
+                Update,
+                (print_level, update_level, level_restart, load_other_level),
+            );
     }
 }
 
@@ -70,7 +73,7 @@ fn spawn_level(
     window_query: Query<&Window, With<PrimaryWindow>>,
     // resource
     asset_server: Res<AssetServer>,
-    level_index: Res<CurrentLevelIndex>,
+    level_index: ResMut<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     // event
     mut events: EventWriter<Won>,
@@ -169,14 +172,17 @@ fn spawn_duck(
             texture: sprite,
             ..default()
         },
-        Duck { logic_position },
+        Duck {
+            logic_position,
+            is_full: false,
+        },
         Object {},
     ));
 }
 
 fn spawn_sprites(
-    mut commands: &mut Commands,
-    level: &Vec<Vec<char>>,
+    commands: &mut Commands,
+    level: &[Vec<char>],
     window_query: &Query<&Window, With<PrimaryWindow>>,
     asset_server: &Res<AssetServer>,
     bread_count: &mut ResMut<BreadCount>,
@@ -201,29 +207,17 @@ fn spawn_sprites(
 
             match object_type {
                 ObjectType::Wall => {
-                    spawn_object(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/wall.png"),
-                    );
+                    spawn_object(commands, position, asset_server.load("sprites/wall.png"));
                 }
                 ObjectType::Ice => {
-                    spawn_object(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/ice.png"),
-                    );
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                 }
                 ObjectType::DuckOnIce => {
-                    spawn_object(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/ice.png"),
-                    );
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     //events.send(SpawnDuck((col_index, row_index)));
                     if !is_update {
                         spawn_duck(
-                            &mut commands,
+                            commands,
                             position,
                             asset_server.load("sprites/duck.png"),
                             (col_index, row_index),
@@ -232,16 +226,8 @@ fn spawn_sprites(
                 }
                 ObjectType::BreadOnIce => {
                     bread_count.0 += 1;
-                    spawn_object(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/ice.png"),
-                    );
-                    spawn_upper_object(
-                        &mut commands,
-                        position,
-                        asset_server.load("sprites/bread.png"),
-                    );
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    spawn_upper_object(commands, position, asset_server.load("sprites/bread.png"));
                 }
             };
         }
@@ -277,7 +263,7 @@ fn level_restart(
     input: Res<Input<KeyCode>>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
-    level_index: Res<CurrentLevelIndex>,
+    level_index: ResMut<CurrentLevelIndex>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -293,5 +279,33 @@ fn level_restart(
             bread_count,
             events,
         );
+    }
+}
+
+fn load_other_level(
+    mut commands: Commands,
+    // query
+    object_query: Query<Entity, With<Object>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    // resource
+    level_index: ResMut<CurrentLevelIndex>,
+    asset_server: Res<AssetServer>,
+    bread_count: ResMut<BreadCount>,
+    // event
+    events: EventWriter<Won>,
+) {
+    if level_index.is_changed() {
+        // clear the scene
+        for entity in object_query.iter() {
+            commands.entity(entity).despawn();
+        }
+        spawn_level(
+            commands,
+            window_query,
+            asset_server,
+            level_index,
+            bread_count,
+            events,
+        )
     }
 }

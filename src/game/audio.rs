@@ -1,47 +1,47 @@
-use bevy::audio::PlaybackMode;
+use bevy::audio::{PlaybackMode, Volume, AudioLoader};
 
 use super::*;
 
 pub struct Plugin;
 
-#[derive(Resource)]
-struct Sfx(Handle<AudioSource>);
-
 #[derive(Event, Default)]
-pub struct PlaySFX;
+pub struct PlaySFX {
+    pub path: String,
+    pub volume: Volume,
+}
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (load_bgm, load_sfx))
+        app.add_systems(Startup, play_bgm)
             .add_event::<PlaySFX>()
             .add_systems(Update, play_sfx);
     }
 }
 
-fn load_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn play_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(AudioBundle {
         source: asset_server.load("audio/bgm.wav"),
         settings: PlaybackSettings {
             mode: PlaybackMode::Loop,
-            volume: bevy::audio::Volume::new_absolute(0.5),
+            volume: Volume::new_absolute(0.5),
             ..default()
         },
     });
 }
 
-fn load_sfx(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let quark_sound = asset_server.load("audio/quark.wav");
-
-    // Insert the Audio resource with the loaded sound effect
-    commands.insert_resource(Sfx(quark_sound));
-}
-
-fn play_sfx(sfx_assets: Res<Sfx>, mut events: EventReader<PlaySFX>, mut commands: Commands) {
-    for _ in events.read() {
-        let quark_sound = sfx_assets.0.clone();
+pub fn play_sfx(
+    mut events: EventReader<PlaySFX>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    for event in events.read() {
         commands.spawn(AudioBundle {
-            source: quark_sound,
-            settings: PlaybackSettings::DESPAWN,
+            source: asset_server.load(event.path.clone()),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: event.volume,
+                ..default()
+            },
         });
     }
 }
