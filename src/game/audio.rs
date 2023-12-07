@@ -1,4 +1,4 @@
-use bevy::audio::{PlaybackMode, Volume, AudioLoader};
+use bevy::audio::{PlaybackMode, Volume};
 
 use super::*;
 

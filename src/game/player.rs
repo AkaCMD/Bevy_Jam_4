@@ -79,7 +79,7 @@ fn player_movement(
                 // play eat sound
                 events_sfx.send(PlaySFX {
                     path: "audio/eat.ogg".to_string(),
-                    volume: bevy::audio::Volume::new_absolute(1.0),
+                    volume: bevy::audio::Volume::new_absolute(0.5),
                 });
             }
 

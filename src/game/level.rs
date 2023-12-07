@@ -24,7 +24,7 @@ impl bevy::app::Plugin for Plugin {
 pub struct Level(pub Vec<Vec<char>>);
 
 #[derive(Resource)]
-pub struct CurrentLevelIndex(i32);
+pub struct CurrentLevelIndex(pub i32);
 
 impl Default for CurrentLevelIndex {
     fn default() -> Self {
@@ -56,7 +56,7 @@ pub struct PrintLevel;
 #[derive(Event, Default)]
 pub struct UpdateLevel;
 
-fn load_level_from_file(file_path: &str) -> Result<Level, std::io::Error> {
+pub fn load_level_from_file(file_path: &str) -> Result<Level, std::io::Error> {
     let contents = fs::read_to_string(file_path)?;
 
     let level_data: Vec<Vec<char>> = contents
@@ -259,6 +259,7 @@ fn level_restart(
     // query
     window_query: Query<&Window, With<PrimaryWindow>>,
     object_query: Query<Entity, With<Object>>,
+    ui_query: Query<Entity, With<ui::MutUI>>,
     // resource
     input: Res<Input<KeyCode>>,
     asset_server: Res<AssetServer>,
@@ -268,8 +269,13 @@ fn level_restart(
     events: EventWriter<Won>,
 ) {
     if input.just_pressed(KeyCode::R) {
+        // Despawn level elements
         for object in &object_query {
             commands.entity(object).despawn();
+        }
+        // Despawn ui elements
+        for entity in ui_query.iter() {
+            commands.entity(entity).despawn();
         }
         spawn_level(
             commands,

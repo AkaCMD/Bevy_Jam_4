@@ -22,7 +22,7 @@ fn get_cursor_position(
     let (camera, camera_transform) = camera_query.single();
     let window = window_query.get_single().unwrap();
     if let Some(cursor_pos) = window
-        .physical_cursor_position()
+        .cursor_position()
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
         cursor_position.0 = cursor_pos;
