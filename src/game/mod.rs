@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_tweening::{lens::*, *};
 
 mod audio;
 mod cursor;

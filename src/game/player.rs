@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::{
     audio::PlaySFX,
     level::{PrintLevel, UpdateLevel},
@@ -10,7 +12,8 @@ pub struct Plugin;
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera)
-            .add_systems(Update, player_movement);
+            .add_systems(Update, player_movement)
+            .add_systems(Update, component_animator_system::<Transform>);
     }
 }
 
@@ -35,8 +38,9 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
 }
 
 fn player_movement(
+    mut commands: Commands,
     // query
-    mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck), With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck, Entity), With<Player>>,
     // event
     mut events: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -46,7 +50,7 @@ fn player_movement(
     level: ResMut<level::Level>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok((mut transform, mut sprite, mut duck)) = player_query.get_single_mut() {
+    if let Ok((mut transform, mut sprite, mut duck, entity)) = player_query.get_single_mut() {
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
@@ -64,16 +68,27 @@ fn player_movement(
         if key_board_input.just_pressed(KeyCode::Down) || key_board_input.just_pressed(KeyCode::S) {
             direction = Direction::Down;
         }
-
-        let end_position = slip(duck.logic_position, direction, level);
-
-        // Update object positions
-        duck.logic_position = end_position;
-        // Update the translation of ducks
-        let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
-        transform.translation = Vec3::new(v3.x, v3.y, 1.0);
-
         if direction != utils::Direction::None {
+            let end_position = slip(duck.logic_position, direction, level);
+
+            // Update object positions
+            duck.logic_position = end_position;
+            // Update the translation of ducks
+            let v3 =
+                logic_position_to_translation(end_position, window_query.get_single().unwrap());
+            let tween = Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_millis(300),
+                TransformPositionLens {
+                    start: transform.translation,
+                    end: Vec3::new(v3.x, v3.y, 1.0),
+                },
+            )
+            .with_repeat_count(1);
+            commands.entity(entity).insert(Animator::new(tween));
+            //let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
+            //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
+
             // play quark sound
             events.send(PlaySFX);
             events_1.send(PrintLevel);
