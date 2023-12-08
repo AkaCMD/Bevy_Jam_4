@@ -1,6 +1,6 @@
 use std::fs;
 
-use super::{player::Duck, ui::Won, *};
+use super::{cursor::ArrowHint, player::Duck, ui::Won, *};
 use bevy::window::PrimaryWindow;
 
 pub struct Plugin;
@@ -12,12 +12,12 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<CurrentLevelIndex>()
             .init_resource::<BreadCount>()
             .init_resource::<TotalBreadCount>()
-            .add_event::<PrintLevel>()
+            //.add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
             .add_systems(
                 Update,
                 (
-                    print_level,
+                    //print_level,
                     update_level,
                     level_restart,
                     load_other_level,
@@ -58,7 +58,7 @@ enum ObjectType {
 }
 
 #[derive(Component)]
-struct Object {}
+pub struct Object;
 
 #[derive(Event, Default)]
 pub struct PrintLevel;
@@ -114,7 +114,8 @@ fn update_level(
     mut events: EventWriter<Won>,
     // query
     window_query: Query<&Window, With<PrimaryWindow>>,
-    object_query: Query<Entity, (With<Object>, Without<Duck>)>,
+    // add the objects that won't be despawn to the filter
+    object_query: Query<Entity, (With<Object>, Without<Duck>, Without<ArrowHint>)>,
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
@@ -122,6 +123,7 @@ fn update_level(
 ) {
     for _ in events_update.read() {
         // Do not despawn ducks, update the translations of ducks
+        // Do not despawn the arrow hint
         for object in &object_query {
             commands.entity(object).despawn();
         }
@@ -149,7 +151,7 @@ fn spawn_object(commands: &mut Commands, position: Vec3, sprite: Handle<Image>) 
             },
             ..default()
         },
-        Object {},
+        Object,
     ));
 }
 
@@ -164,7 +166,7 @@ pub fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handl
             },
             ..default()
         },
-        Object {},
+        Object,
     ));
 }
 
@@ -188,7 +190,7 @@ fn spawn_duck(
             logic_position,
             is_stuffed: false,
         },
-        Object {},
+        Object,
     ));
 }
 
@@ -347,6 +349,5 @@ fn change_level_cheats(input: Res<Input<KeyCode>>, mut level_index: ResMut<Curre
     {
         info!("Invalid level index");
         level_index.0 = origin_index;
-        return;
     }
 }

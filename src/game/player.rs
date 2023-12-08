@@ -41,17 +41,28 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
 fn player_movement(
     mut commands: Commands,
     // query
-    mut player_query: Query<(&mut Transform, &mut Sprite, &mut Duck, Entity), With<Player>>,
+    mut player_query: Query<
+        (
+            &mut Transform,
+            &mut Sprite,
+            &mut Handle<Image>,
+            &mut Duck,
+            Entity,
+        ),
+        With<Player>,
+    >,
     window_query: Query<&Window, With<PrimaryWindow>>,
     // event
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
-    mut events_print: EventWriter<PrintLevel>,
+    //mut events_print: EventWriter<PrintLevel>,
     // resource
     key_board_input: Res<Input<KeyCode>>,
     level: ResMut<level::Level>,
+    asset_server: Res<AssetServer>,
 ) {
-    if let Ok((transform, mut sprite, mut duck, entity)) = player_query.get_single_mut() {
+    if let Ok((transform, mut sprite, mut image, mut duck, entity)) = player_query.get_single_mut()
+    {
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
@@ -74,13 +85,14 @@ fn player_movement(
             let end_position = slip(&mut duck, direction, level);
             let duck_is_stuffed_after = duck.is_stuffed;
 
-            // TODO: fix it, delay it
+            // TODO: delay it
             if !duck_is_stuffed_before && duck_is_stuffed_after {
                 // play eat sound
                 events_sfx.send(PlaySFX {
                     path: "audio/eat.ogg".to_string(),
-                    volume: bevy::audio::Volume::new_absolute(0.5),
+                    volume: bevy::audio::Volume::new_absolute(0.2),
                 });
+                *image = asset_server.load("sprites/stuffed_duck.png");
             }
 
             // Update object positions
@@ -107,7 +119,7 @@ fn player_movement(
                 path: "audio/quark.wav".to_string(),
                 volume: bevy::audio::Volume::new_absolute(0.5),
             });
-            events_print.send(PrintLevel);
+            //events_print.send(PrintLevel);
             events_update.send(UpdateLevel);
         }
     }

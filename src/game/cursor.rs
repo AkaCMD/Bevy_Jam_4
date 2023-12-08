@@ -11,6 +11,9 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
+#[derive(Component)]
+pub struct ArrowHint;
+
 #[derive(Resource, Default)]
 pub struct CursorPosition(pub Vec2);
 
@@ -26,6 +29,8 @@ fn get_cursor_position(
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
         cursor_position.0 = cursor_pos;
+
+        // TODO: hover cursor on the duck, show arrow hint
     }
 }
 
@@ -37,6 +42,7 @@ fn click_detection(
     window_query: Query<&Window, With<PrimaryWindow>>,
     duck_query: Query<(&Duck, Entity), (With<Duck>, Without<Player>)>,
     player_query: Query<Entity, (With<Duck>, With<Player>)>,
+    arrow_hint_query: Query<Entity, With<ArrowHint>>,
     // resource
     cursor_position: Res<CursorPosition>,
     asset_server: Res<AssetServer>,
@@ -51,22 +57,43 @@ fn click_detection(
                     y: duck_position_v3.y,
                 };
                 if (cursor_position.0 - duck_position).length() < 33.0 {
-                    info!("You are the chosen one!");
-                    commands.entity(entity).insert(Player);
+                    //info!("You are the chosen one!");
+                    commands
+                        .entity(entity)
+                        .insert(Player)
+                        .with_children(|parent| {
+                            parent.spawn((
+                                SpriteBundle {
+                                    transform: Transform {
+                                        translation: Vec3::new(0.0, 500.0, 1.0),
+                                        ..default()
+                                    },
+                                    texture: asset_server.load("sprites/arrow.png"),
+                                    ..default()
+                                },
+                                ArrowHint,
+                                level::Object,
+                            ));
+                        });
+
                     // Clear the previous player
                     for entity in player_query.iter() {
                         commands.entity(entity).remove::<Player>();
                     }
+                    // Clear the previous arrow hint
+                    for entity in arrow_hint_query.iter() {
+                        commands.entity(entity).despawn();
+                    }
                 }
-                spawn_upper_object(
-                    &mut commands,
-                    Vec3 {
-                        x: cursor_position.0.x,
-                        y: cursor_position.0.y,
-                        z: 0.0,
-                    },
-                    asset_server.load("sprites/debug.png"),
-                );
+                // spawn_upper_object(
+                //     &mut commands,
+                //     Vec3 {
+                //         x: cursor_position.0.x,
+                //         y: cursor_position.0.y,
+                //         z: 0.0,
+                //     },
+                //     asset_server.load("sprites/debug.png"),
+                // );
                 //info!("Duck pos: {:?}", duck_position);
                 //info!("Cursor pos: {:?}", cursor_position.0);
                 //info!("Distance: {}", cursor_position.0.distance(duck_position));
