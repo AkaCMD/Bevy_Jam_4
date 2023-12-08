@@ -347,7 +347,7 @@ fn change_level_cheats(input: Res<Input<KeyCode>>, mut level_index: ResMut<Curre
     if level::load_level_from_file(format!("assets/levels/level{}.txt", level_index.0).as_str())
         .is_err()
     {
-        info!("Invalid level index");
+        //info!("Invalid level index");
         level_index.0 = origin_index;
     }
 }

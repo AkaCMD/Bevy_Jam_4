@@ -1,3 +1,5 @@
+use bevy::window::PrimaryWindow;
+
 use super::{
     level::{BreadCount, CurrentLevelIndex, TotalBreadCount},
     *,
@@ -36,7 +38,7 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
             TextStyle {
                 font: asset_server.load("fonts/NotJamChunky8.ttf"),
                 font_size: 30.0,
-                ..default()
+                color: Color::ORANGE,
             },
         )
         .with_text_alignment(TextAlignment::Right)
@@ -76,7 +78,9 @@ fn show_stuffed_ducks_count(
     asset_server: Res<AssetServer>,
     bread_count: Res<BreadCount>,
     total_bread_count: Res<TotalBreadCount>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
+    let window = window_query.get_single().unwrap();
     commands.spawn((
         TextBundle::from_section(
             format!(
@@ -90,11 +94,11 @@ fn show_stuffed_ducks_count(
                 ..default()
             },
         )
-        .with_text_alignment(TextAlignment::Right)
+        .with_text_alignment(TextAlignment::Center)
         .with_style(Style {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
-            right: Val::Px(10.0),
+            right: Val::Px(window.width() / 2.0 - 45.0),
             ..default()
         }),
         StuffedDucksCount,
@@ -146,28 +150,39 @@ fn show_level_title(
 }
 
 // HINTS:
-// Mouse click to choose the duck
+// Click to choose the duck
 // WASD to move
 // R to reset
 // One duck, one bread
 fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(
-        TextBundle::from_section(
-            "Click to choose the duck\nWASD to move\nR to reset\nOne duck, one bread",
-            TextStyle {
-                font: asset_server.load("fonts/NotJamChunky8.ttf"),
-                font_size: 20.0,
-                ..default()
-            },
-        )
-        .with_text_alignment(TextAlignment::Right)
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(300.0),
-            right: Val::Px(10.0),
-            ..default()
-        }),
-    );
+    let text_style_important = TextStyle {
+        font: asset_server.load("fonts/NotJamChunky8.ttf"),
+        font_size: 20.0,
+        color: Color::ORANGE,
+    };
+    let text_style_normal = TextStyle {
+        font: asset_server.load("fonts/NotJamChunky8.ttf"),
+        font_size: 20.0,
+        ..default()
+    };
+    commands.spawn((TextBundle::from_sections([
+        TextSection::new("Click ", text_style_important.clone()),
+        TextSection::new("to choose the duck\n", text_style_normal.clone()),
+        TextSection::new("WASD ", text_style_important.clone()),
+        TextSection::new("to move\n", text_style_normal.clone()),
+        TextSection::new("R ", text_style_important.clone()),
+        TextSection::new("to reset\n", text_style_normal.clone()),
+        TextSection::new("[ ] ", text_style_important.clone()),
+        TextSection::new("to skip levels\n\n", text_style_normal.clone()),
+        TextSection::new("One duck, one bread\n", text_style_important.clone()),
+    ])
+    .with_text_alignment(TextAlignment::Right)
+    .with_style(Style {
+        position_type: PositionType::Absolute,
+        top: Val::Px(300.0),
+        right: Val::Px(10.0),
+        ..default()
+    }),));
 }
 
 fn update_level_title(
@@ -198,8 +213,14 @@ pub struct Won;
 #[derive(Component)]
 pub struct MutUI;
 
-fn won(mut commands: Commands, asset_server: Res<AssetServer>, mut events: EventReader<Won>) {
+fn won(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut events: EventReader<Won>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
     for _ in events.read() {
+        let window = window_query.get_single().unwrap();
         commands.spawn((
             TextBundle::from_section(
                 "Win!",
@@ -209,11 +230,11 @@ fn won(mut commands: Commands, asset_server: Res<AssetServer>, mut events: Event
                     color: Color::ORANGE,
                 },
             )
-            .with_text_alignment(TextAlignment::Right)
+            .with_text_alignment(TextAlignment::Center)
             .with_style(Style {
                 position_type: PositionType::Absolute,
                 top: Val::Px(40.0),
-                right: Val::Px(10.0),
+                right: Val::Px(window.width() / 2.0 - 80.0),
                 ..default()
             }),
             MutUI,
