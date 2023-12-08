@@ -1,11 +1,30 @@
-use super::{level::CurrentLevelIndex, *};
+use super::{
+    level::{BreadCount, CurrentLevelIndex, TotalBreadCount},
+    *,
+};
 pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (show_title_and_name, show_level_title, show_hints))
-            .add_event::<Won>()
-            .add_systems(Update, (won, update_level_title, next_level_button));
+        app.add_systems(
+            Startup,
+            (
+                show_title_and_name,
+                show_level_title,
+                show_hints,
+                show_stuffed_ducks_count,
+            ),
+        )
+        .add_event::<Won>()
+        .add_systems(
+            Update,
+            (
+                won,
+                update_level_title,
+                next_level_button,
+                update_stuffed_ducks_count,
+            ),
+        );
     }
 }
 
@@ -47,6 +66,55 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         }),
     );
+}
+
+#[derive(Component)]
+struct StuffedDucksCount;
+
+fn show_stuffed_ducks_count(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    bread_count: Res<BreadCount>,
+    total_bread_count: Res<TotalBreadCount>,
+) {
+    commands.spawn((
+        TextBundle::from_section(
+            format!(
+                "{}/{}",
+                total_bread_count.0 - bread_count.0,
+                total_bread_count.0
+            ),
+            TextStyle {
+                font: asset_server.load("fonts/NotJamChunky8.ttf"),
+                font_size: 30.0,
+                ..default()
+            },
+        )
+        .with_text_alignment(TextAlignment::Right)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            top: Val::Px(10.0),
+            right: Val::Px(10.0),
+            ..default()
+        }),
+        StuffedDucksCount,
+    ));
+}
+
+fn update_stuffed_ducks_count(
+    bread_count: Res<BreadCount>,
+    total_bread_count: Res<TotalBreadCount>,
+    mut stuffed_ducks_count: Query<&mut Text, With<StuffedDucksCount>>,
+) {
+    if bread_count.is_changed() || total_bread_count.is_changed() {
+        for mut text in stuffed_ducks_count.iter_mut() {
+            text.sections[0].value = format!(
+                "{}/{}",
+                total_bread_count.0 - bread_count.0,
+                total_bread_count.0
+            );
+        }
+    }
 }
 
 #[derive(Component)]
@@ -137,14 +205,14 @@ fn won(mut commands: Commands, asset_server: Res<AssetServer>, mut events: Event
                 "Win!",
                 TextStyle {
                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
-                    font_size: 30.0,
-                    ..default()
+                    font_size: 40.0,
+                    color: Color::ORANGE,
                 },
             )
             .with_text_alignment(TextAlignment::Right)
             .with_style(Style {
                 position_type: PositionType::Absolute,
-                top: Val::Px(10.0),
+                top: Val::Px(40.0),
                 right: Val::Px(10.0),
                 ..default()
             }),

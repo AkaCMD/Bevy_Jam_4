@@ -11,11 +11,18 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<Level>()
             .init_resource::<CurrentLevelIndex>()
             .init_resource::<BreadCount>()
+            .init_resource::<TotalBreadCount>()
             .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
             .add_systems(
                 Update,
-                (print_level, update_level, level_restart, load_other_level),
+                (
+                    print_level,
+                    update_level,
+                    level_restart,
+                    load_other_level,
+                    change_level_cheats,
+                ),
             );
     }
 }
@@ -31,6 +38,9 @@ impl Default for CurrentLevelIndex {
         CurrentLevelIndex(1)
     }
 }
+
+#[derive(Resource, Default)]
+pub struct TotalBreadCount(pub i32);
 
 #[derive(Resource)]
 pub struct BreadCount(pub i32);
@@ -75,6 +85,7 @@ fn spawn_level(
     asset_server: Res<AssetServer>,
     level_index: ResMut<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
+    mut total_bread_count: ResMut<TotalBreadCount>,
     // event
     mut events: EventWriter<Won>,
 ) {
@@ -92,6 +103,7 @@ fn spawn_level(
             false,
         );
         commands.insert_resource(level);
+        total_bread_count.0 = bread_count.0;
     }
 }
 
@@ -174,7 +186,7 @@ fn spawn_duck(
         },
         Duck {
             logic_position,
-            is_full: false,
+            is_stuffed: false,
         },
         Object {},
     ));
@@ -264,6 +276,7 @@ fn level_restart(
     input: Res<Input<KeyCode>>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
+    total_bread_count: ResMut<TotalBreadCount>,
     level_index: ResMut<CurrentLevelIndex>,
     // event
     events: EventWriter<Won>,
@@ -283,6 +296,7 @@ fn level_restart(
             asset_server,
             level_index,
             bread_count,
+            total_bread_count,
             events,
         );
     }
@@ -297,6 +311,7 @@ fn load_other_level(
     level_index: ResMut<CurrentLevelIndex>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
+    total_bread_count: ResMut<TotalBreadCount>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -311,7 +326,27 @@ fn load_other_level(
             asset_server,
             level_index,
             bread_count,
+            total_bread_count,
             events,
         )
+    }
+}
+
+// Cheat codes for skipping levels
+fn change_level_cheats(input: Res<Input<KeyCode>>, mut level_index: ResMut<CurrentLevelIndex>) {
+    let origin_index = level_index.0;
+    if input.just_pressed(KeyCode::BracketLeft) {
+        level_index.0 -= 1;
+    }
+    if input.just_pressed(KeyCode::BracketRight) {
+        level_index.0 += 1;
+    }
+    // Handle invalid level index
+    if level::load_level_from_file(format!("assets/levels/level{}.txt", level_index.0).as_str())
+        .is_err()
+    {
+        info!("Invalid level index");
+        level_index.0 = origin_index;
+        return;
     }
 }

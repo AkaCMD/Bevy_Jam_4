@@ -20,7 +20,7 @@ impl bevy::app::Plugin for Plugin {
 #[derive(Component)]
 pub struct Duck {
     pub logic_position: (usize, usize),
-    pub is_full: bool, // one duck, one bread
+    pub is_stuffed: bool, // one duck, one bread
 }
 
 // the chosen duck
@@ -70,12 +70,12 @@ fn player_movement(
             direction = Direction::Down;
         }
         if direction != utils::Direction::None {
-            let duck_is_full_before = duck.is_full;
+            let duck_is_stuffed_before = duck.is_stuffed;
             let end_position = slip(&mut duck, direction, level);
-            let duck_is_full_after = duck.is_full;
+            let duck_is_stuffed_after = duck.is_stuffed;
 
             // TODO: fix it, delay it
-            if !duck_is_full_before && duck_is_full_after {
+            if !duck_is_stuffed_before && duck_is_stuffed_after {
                 // play eat sound
                 events_sfx.send(PlaySFX {
                     path: "audio/eat.ogg".to_string(),
@@ -135,11 +135,11 @@ fn slip(
             while position.1 > 0
                 && level.0[position.1 - 1][position.0] != '@'
                 && level.0[position.1 - 1][position.0] != 'D'
-                && (!duck.is_full || level.0[position.1 - 1][position.0] != 'B')
+                && (!duck.is_stuffed || level.0[position.1 - 1][position.0] != 'B')
             {
                 position.1 -= 1;
                 if level.0[position.1][position.0] == 'B' {
-                    duck.is_full = true;
+                    duck.is_stuffed = true;
                     break;
                 }
             }
@@ -148,11 +148,11 @@ fn slip(
             while position.1 < rows - 1
                 && level.0[position.1 + 1][position.0] != '@'
                 && level.0[position.1 + 1][position.0] != 'D'
-                && (!duck.is_full || level.0[position.1 + 1][position.0] != 'B')
+                && (!duck.is_stuffed || level.0[position.1 + 1][position.0] != 'B')
             {
                 position.1 += 1;
                 if level.0[position.1][position.0] == 'B' {
-                    duck.is_full = true;
+                    duck.is_stuffed = true;
                     break;
                 }
             }
@@ -161,11 +161,11 @@ fn slip(
             while position.0 > 0
                 && level.0[position.1][position.0 - 1] != '@'
                 && level.0[position.1][position.0 - 1] != 'D'
-                && (!duck.is_full || level.0[position.1][position.0 - 1] != 'B')
+                && (!duck.is_stuffed || level.0[position.1][position.0 - 1] != 'B')
             {
                 position.0 -= 1;
                 if level.0[position.1][position.0] == 'B' {
-                    duck.is_full = true;
+                    duck.is_stuffed = true;
                     break;
                 }
             }
@@ -174,11 +174,11 @@ fn slip(
             while position.0 < cols - 1
                 && level.0[position.1][position.0 + 1] != '@'
                 && level.0[position.1][position.0 + 1] != 'D'
-                && (!duck.is_full || level.0[position.1][position.0 + 1] != 'B')
+                && (!duck.is_stuffed || level.0[position.1][position.0 + 1] != 'B')
             {
                 position.0 += 1;
                 if level.0[position.1][position.0] == 'B' {
-                    duck.is_full = true;
+                    duck.is_stuffed = true;
                     break;
                 }
             }
