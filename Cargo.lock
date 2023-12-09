@@ -2804,6 +2804,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_tweening",
+ "wasm-bindgen",
 ]
 
 [[package]]

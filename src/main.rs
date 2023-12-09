@@ -1,13 +1,14 @@
 // This attr removes the console on release builds on Windows
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use bevy::prelude::*;
+use bevy::{prelude::*, asset::AssetMetaCheck};
 use bevy_tweening::TweeningPlugin;
 
 mod game;
 
 fn main() {
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
