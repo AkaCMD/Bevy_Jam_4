@@ -30,6 +30,8 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
+const MY_ORANGE: Color = Color::rgb(222.0/255.0, 112.0/255.0, 40.0/255.0);
+
 fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
     // game title
     commands.spawn(
@@ -38,7 +40,7 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
             TextStyle {
                 font: asset_server.load("fonts/NotJamChunky8.ttf"),
                 font_size: 30.0,
-                color: Color::ORANGE,
+                color: MY_ORANGE,
             },
         )
         .with_text_alignment(TextAlignment::Right)
@@ -158,7 +160,7 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
     let text_style_important = TextStyle {
         font: asset_server.load("fonts/NotJamChunky8.ttf"),
         font_size: 20.0,
-        color: Color::ORANGE,
+        color: MY_ORANGE,
     };
     let text_style_normal = TextStyle {
         font: asset_server.load("fonts/NotJamChunky8.ttf"),
@@ -227,7 +229,7 @@ fn won(
                 TextStyle {
                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
                     font_size: 40.0,
-                    color: Color::ORANGE,
+                    color: MY_ORANGE,
                 },
             )
             .with_text_alignment(TextAlignment::Center)

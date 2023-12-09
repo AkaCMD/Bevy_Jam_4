@@ -11,6 +11,8 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
+const DISTANCE: f32 = 33.0;
+
 #[derive(Component)]
 pub struct ArrowHint;
 
@@ -54,7 +56,7 @@ fn click_detection(
                     x: duck_position_v3.x,
                     y: duck_position_v3.y,
                 };
-                if (cursor_position.0 - duck_position).length() < 33.0 {
+                if (cursor_position.0 - duck_position).length() < DISTANCE {
                     //info!("You are the chosen one!");
                     commands
                         .entity(entity)

@@ -37,7 +37,7 @@ pub struct Levels {
     pub level6: &'static str,
     pub level7: &'static str,
 }
-
+// wasm version can't use std library
 impl Default for Levels {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
