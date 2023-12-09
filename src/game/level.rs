@@ -73,6 +73,17 @@ impl Default for Levels {
             include_str!("../../assets/levels/level7.txt"),
         );
 
+        #[cfg(target_arch = "wasm32")]
+        let (level1, level2, level3, level4, level5, level6, level7) = (
+            include_str!("../../assets/levels/level1.txt"),
+            include_str!("../../assets/levels/level2.txt"),
+            include_str!("../../assets/levels/level3.txt"),
+            include_str!("../../assets/levels/level4.txt"),
+            include_str!("../../assets/levels/level5.txt"),
+            include_str!("../../assets/levels/level6.txt"),
+            include_str!("../../assets/levels/level7.txt"),
+        );
+
         Levels {
             level1,
             level2,
@@ -84,7 +95,6 @@ impl Default for Levels {
         }
     }
 }
-
 
 #[derive(Error, Debug)]
 pub enum GameError {

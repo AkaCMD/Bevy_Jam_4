@@ -92,8 +92,7 @@ fn player_movement(
             // Update object positions
             duck.logic_position = end_position;
             // Update the translation of ducks
-            let v3 =
-                logic_position_to_translation(end_position);
+            let v3 = logic_position_to_translation(end_position);
             let tween = Tween::new(
                 EaseFunction::QuadraticInOut,
                 Duration::from_millis(300),
