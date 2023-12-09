@@ -1,3 +1,6 @@
+// This attr removes the console on release builds on Windows
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use bevy::prelude::*;
 use bevy_tweening::TweeningPlugin;
 
