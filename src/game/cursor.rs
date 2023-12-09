@@ -1,4 +1,4 @@
-use super::{level::spawn_upper_object, player::Duck, *};
+use super::{player::Duck, *};
 use crate::game::player::Player;
 use bevy::{input::mouse::MouseButtonInput, window::PrimaryWindow};
 
@@ -39,7 +39,6 @@ fn click_detection(
     // event
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     // query
-    window_query: Query<&Window, With<PrimaryWindow>>,
     duck_query: Query<(&Duck, Entity), (With<Duck>, Without<Player>)>,
     player_query: Query<Entity, (With<Duck>, With<Player>)>,
     arrow_hint_query: Query<Entity, With<ArrowHint>>,
@@ -48,10 +47,9 @@ fn click_detection(
     asset_server: Res<AssetServer>,
 ) {
     for event in mouse_button_input_events.read() {
-        let window = window_query.get_single().unwrap();
         if event.button == MouseButton::Left {
             for (duck, entity) in duck_query.iter() {
-                let duck_position_v3 = logic_position_to_translation(duck.logic_position, window);
+                let duck_position_v3 = logic_position_to_translation(duck.logic_position);
                 let duck_position: Vec2 = Vec2 {
                     x: duck_position_v3.x,
                     y: duck_position_v3.y,

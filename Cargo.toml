@@ -6,11 +6,9 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.75"
 bevy = {version = "0.12.1", features = ["wav", "wayland"]}
 bevy_tweening = "0.9"
-
-[workspace]
-resolver = "2"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -24,4 +22,5 @@ opt-level = 3
 type_complexity = "allow"
 too_many_arguments = "allow"
 
-
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"

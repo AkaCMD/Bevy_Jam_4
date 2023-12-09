@@ -1,7 +1,6 @@
-use std::fs;
-
 use super::{cursor::ArrowHint, player::Duck, ui::Won, *};
-use bevy::window::PrimaryWindow;
+use bevy::utils::thiserror;
+use thiserror::Error;
 
 pub struct Plugin;
 
@@ -9,6 +8,7 @@ impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_level)
             .init_resource::<Level>()
+            .init_resource::<Levels>()
             .init_resource::<CurrentLevelIndex>()
             .init_resource::<BreadCount>()
             .init_resource::<TotalBreadCount>()
@@ -25,6 +25,58 @@ impl bevy::app::Plugin for Plugin {
                 ),
             );
     }
+}
+
+#[derive(Resource)]
+pub struct Levels {
+    pub level1: &'static str,
+    pub level2: &'static str,
+    pub level3: &'static str,
+    pub level4: &'static str,
+    pub level5: &'static str,
+    pub level6: &'static str,
+    pub level7: &'static str,
+}
+
+impl Default for Levels {
+    fn default() -> Self {
+        Levels {
+            level1: include_str!("..\\..\\assets\\levels\\level1.txt"),
+            level2: include_str!("..\\..\\assets\\levels\\level2.txt"),
+            level3: include_str!("..\\..\\assets\\levels\\level3.txt"),
+            level4: include_str!("..\\..\\assets\\levels\\level4.txt"),
+            level5: include_str!("..\\..\\assets\\levels\\level5.txt"),
+            level6: include_str!("..\\..\\assets\\levels\\level6.txt"),
+            level7: include_str!("..\\..\\assets\\levels\\level7.txt"),
+        }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum GameError {
+    #[error("Fail to load level!")]
+    FailToLoadLevels,
+}
+
+pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level> {
+    let level_content = match level_index {
+        1 => levels.level1,
+        2 => levels.level2,
+        3 => levels.level3,
+        4 => levels.level4,
+        5 => levels.level5,
+        6 => levels.level6,
+        7 => levels.level7,
+        _ => return Err(GameError::FailToLoadLevels.into()),
+    };
+
+    let level_data: Vec<Vec<char>> = level_content
+        .to_string()
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
+
+    Ok(Level(level_data))
 }
 
 #[derive(Resource, Default)]
@@ -66,37 +118,33 @@ pub struct PrintLevel;
 #[derive(Event, Default)]
 pub struct UpdateLevel;
 
-pub fn load_level_from_file(file_path: &str) -> Result<Level, std::io::Error> {
-    let contents = fs::read_to_string(file_path)?;
+// pub fn load_level_from_file(file_path: &str) -> Result<Level, std::io::Error> {
+//     let contents = fs::read_to_string(file_path)?;
 
-    let level_data: Vec<Vec<char>> = contents
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect();
+//     let level_data: Vec<Vec<char>> = contents
+//         .lines()
+//         .map(|line| line.chars().collect())
+//         .collect();
 
-    Ok(Level(level_data))
-}
+//     Ok(Level(level_data))
+// }
 
 fn spawn_level(
     mut commands: Commands,
-    // query
-    window_query: Query<&Window, With<PrimaryWindow>>,
     // resource
     asset_server: Res<AssetServer>,
     level_index: ResMut<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut total_bread_count: ResMut<TotalBreadCount>,
+    levels: Res<Levels>,
     // event
     mut events: EventWriter<Won>,
 ) {
     // Load the level from a .txt file
-    if let Ok(level) =
-        load_level_from_file(format!("assets/levels/level{}.txt", level_index.0).as_str())
-    {
+    if let Ok(level) = load_level(level_index.0, levels) {
         spawn_sprites(
             &mut commands,
             &level.0,
-            &window_query,
             &asset_server,
             &mut bread_count,
             &mut events,
@@ -112,8 +160,6 @@ fn update_level(
     // event
     mut events_update: EventReader<UpdateLevel>,
     mut events: EventWriter<Won>,
-    // query
-    window_query: Query<&Window, With<PrimaryWindow>>,
     // add the objects that won't be despawn to the filter
     object_query: Query<Entity, (With<Object>, Without<Duck>, Without<ArrowHint>)>,
     // resource
@@ -131,7 +177,6 @@ fn update_level(
         spawn_sprites(
             &mut commands,
             &level.0,
-            &window_query,
             &asset_server,
             &mut bread_count,
             &mut events,
@@ -197,7 +242,6 @@ fn spawn_duck(
 fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
-    window_query: &Query<&Window, With<PrimaryWindow>>,
     asset_server: &Res<AssetServer>,
     bread_count: &mut ResMut<BreadCount>,
     // event
@@ -206,11 +250,10 @@ fn spawn_sprites(
     is_update: bool,
 ) {
     bread_count.0 = 0;
-    let window = window_query.get_single().unwrap();
     // spawn the sprites
     for (row_index, row) in level.iter().enumerate() {
         for (col_index, &ch) in row.iter().enumerate() {
-            let position = logic_position_to_translation((col_index, row_index), window);
+            let position = logic_position_to_translation((col_index, row_index));
             let object_type = match ch {
                 '@' => ObjectType::Wall,
                 '#' => ObjectType::Ice,
@@ -252,6 +295,7 @@ fn spawn_sprites(
     }
 }
 
+#[allow(dead_code)]
 pub fn print_level(
     level: Res<Level>,
     bread_count: Res<BreadCount>,
@@ -271,7 +315,6 @@ pub fn print_level(
 fn level_restart(
     mut commands: Commands,
     // query
-    window_query: Query<&Window, With<PrimaryWindow>>,
     object_query: Query<Entity, With<Object>>,
     ui_query: Query<Entity, With<ui::MutUI>>,
     // resource
@@ -280,6 +323,7 @@ fn level_restart(
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
     level_index: ResMut<CurrentLevelIndex>,
+    levels: Res<Levels>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -294,11 +338,11 @@ fn level_restart(
         }
         spawn_level(
             commands,
-            window_query,
             asset_server,
             level_index,
             bread_count,
             total_bread_count,
+            levels,
             events,
         );
     }
@@ -308,12 +352,12 @@ fn load_other_level(
     mut commands: Commands,
     // query
     object_query: Query<Entity, With<Object>>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
     // resource
     level_index: ResMut<CurrentLevelIndex>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
+    levels: Res<Levels>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -324,18 +368,22 @@ fn load_other_level(
         }
         spawn_level(
             commands,
-            window_query,
             asset_server,
             level_index,
             bread_count,
             total_bread_count,
+            levels,
             events,
         )
     }
 }
 
 // Cheat codes for skipping levels
-fn change_level_cheats(input: Res<Input<KeyCode>>, mut level_index: ResMut<CurrentLevelIndex>) {
+fn change_level_cheats(
+    input: Res<Input<KeyCode>>,
+    levels: Res<Levels>,
+    mut level_index: ResMut<CurrentLevelIndex>,
+) {
     let origin_index = level_index.0;
     if input.just_pressed(KeyCode::BracketLeft) {
         level_index.0 -= 1;
@@ -344,9 +392,7 @@ fn change_level_cheats(input: Res<Input<KeyCode>>, mut level_index: ResMut<Curre
         level_index.0 += 1;
     }
     // Handle invalid level index
-    if level::load_level_from_file(format!("assets/levels/level{}.txt", level_index.0).as_str())
-        .is_err()
-    {
+    if load_level(level_index.0, levels).is_err() {
         //info!("Invalid level index");
         level_index.0 = origin_index;
     }

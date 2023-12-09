@@ -1,10 +1,5 @@
-use std::time::Duration;
-
-use super::{
-    audio::PlaySFX,
-    level::{PrintLevel, UpdateLevel},
-    *,
-};
+use super::{audio::PlaySFX, level::UpdateLevel, *};
+use bevy::utils::Duration;
 use bevy::window::PrimaryWindow;
 
 pub struct Plugin;
@@ -51,7 +46,6 @@ fn player_movement(
         ),
         With<Player>,
     >,
-    window_query: Query<&Window, With<PrimaryWindow>>,
     // event
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -99,7 +93,7 @@ fn player_movement(
             duck.logic_position = end_position;
             // Update the translation of ducks
             let v3 =
-                logic_position_to_translation(end_position, window_query.get_single().unwrap());
+                logic_position_to_translation(end_position);
             let tween = Tween::new(
                 EaseFunction::QuadraticInOut,
                 Duration::from_millis(300),

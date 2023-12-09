@@ -293,24 +293,20 @@ fn next_level_button(
         (Changed<Interaction>, With<Button>),
     >,
     mut level_index: ResMut<CurrentLevelIndex>,
+    levels: Res<level::Levels>,
 ) {
+    // Handle invalid level index
+    if level::load_level(level_index.0, levels).is_err() {
+        info!("Invalid level index");
+        level_index.0 -= 1;
+        return;
+    }
     for (interaction, mut color, mut border_color) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 *color = PRESSED_BUTTON.into();
                 border_color.0 = Color::WHITE;
                 level_index.0 += 1;
-
-                // Handle invalid level index
-                if level::load_level_from_file(
-                    format!("assets/levels/level{}.txt", level_index.0).as_str(),
-                )
-                .is_err()
-                {
-                    info!("Invalid level index");
-                    level_index.0 -= 1;
-                    return;
-                }
             }
             Interaction::Hovered => {
                 *color = HOVERED_BUTTON.into();
