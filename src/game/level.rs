@@ -40,17 +40,51 @@ pub struct Levels {
 
 impl Default for Levels {
     fn default() -> Self {
+        #[cfg(target_os = "windows")]
+        let (level1, level2, level3, level4, level5, level6, level7) = (
+            include_str!("..\\..\\assets\\levels\\level1.txt"),
+            include_str!("..\\..\\assets\\levels\\level2.txt"),
+            include_str!("..\\..\\assets\\levels\\level3.txt"),
+            include_str!("..\\..\\assets\\levels\\level4.txt"),
+            include_str!("..\\..\\assets\\levels\\level5.txt"),
+            include_str!("..\\..\\assets\\levels\\level6.txt"),
+            include_str!("..\\..\\assets\\levels\\level7.txt"),
+        );
+
+        #[cfg(target_os = "linux")]
+        let (level1, level2, level3, level4, level5, level6, level7) = (
+            include_str!("../../assets/levels/level1.txt"),
+            include_str!("../../assets/levels/level2.txt"),
+            include_str!("../../assets/levels/level3.txt"),
+            include_str!("../../assets/levels/level4.txt"),
+            include_str!("../../assets/levels/level5.txt"),
+            include_str!("../../assets/levels/level6.txt"),
+            include_str!("../../assets/levels/level7.txt"),
+        );
+
+        #[cfg(target_os = "macos")]
+        let (level1, level2, level3, level4, level5, level6, level7) = (
+            include_str!("../../assets/levels/level1.txt"),
+            include_str!("../../assets/levels/level2.txt"),
+            include_str!("../../assets/levels/level3.txt"),
+            include_str!("../../assets/levels/level4.txt"),
+            include_str!("../../assets/levels/level5.txt"),
+            include_str!("../../assets/levels/level6.txt"),
+            include_str!("../../assets/levels/level7.txt"),
+        );
+
         Levels {
-            level1: include_str!("..\\..\\assets\\levels\\level1.txt"),
-            level2: include_str!("..\\..\\assets\\levels\\level2.txt"),
-            level3: include_str!("..\\..\\assets\\levels\\level3.txt"),
-            level4: include_str!("..\\..\\assets\\levels\\level4.txt"),
-            level5: include_str!("..\\..\\assets\\levels\\level5.txt"),
-            level6: include_str!("..\\..\\assets\\levels\\level6.txt"),
-            level7: include_str!("..\\..\\assets\\levels\\level7.txt"),
+            level1,
+            level2,
+            level3,
+            level4,
+            level5,
+            level6,
+            level7,
         }
     }
 }
+
 
 #[derive(Error, Debug)]
 pub enum GameError {
