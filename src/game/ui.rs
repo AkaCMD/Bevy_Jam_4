@@ -30,7 +30,8 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
-const MY_ORANGE: Color = Color::rgb(222.0/255.0, 112.0/255.0, 40.0/255.0);
+const MY_ORANGE: Color = Color::rgb(222.0 / 255.0, 112.0 / 255.0, 40.0 / 255.0);
+const MY_BROWN: Color = Color::rgb(91.0 / 255.0, 75.0 / 255.0, 73.0 / 255.0);
 
 fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
     // game title
@@ -205,8 +206,9 @@ fn update_level_title(
     }
 }
 
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
+const NORMAL_BUTTON: Color = MY_ORANGE;
+const HOVERED_BUTTON: Color =
+    Color::rgb(222.0 / 255.0 + 0.1, 112.0 / 255.0 + 0.1, 40.0 / 255.0 + 0.1);
 const PRESSED_BUTTON: Color = Color::rgb(0.75, 0.75, 0.75);
 
 #[derive(Event, Default)]
@@ -228,7 +230,7 @@ fn won(
                 "Win!",
                 TextStyle {
                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
-                    font_size: 40.0,
+                    font_size: 50.0,
                     color: MY_ORANGE,
                 },
             )
@@ -236,7 +238,7 @@ fn won(
             .with_style(Style {
                 position_type: PositionType::Absolute,
                 top: Val::Px(40.0),
-                right: Val::Px(window.width() / 2.0 - 80.0),
+                right: Val::Px(window.width() / 2.0 - 100.0),
                 ..default()
             }),
             MutUI,
@@ -280,7 +282,7 @@ fn won(
                                 TextStyle {
                                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
                                     font_size: 20.0,
-                                    color: Color::rgb(0.9, 0.9, 0.9),
+                                    color: Color::WHITE,
                                 },
                             ))
                             .insert(MutUI);
@@ -316,7 +318,7 @@ fn next_level_button(
             }
             Interaction::None => {
                 *color = NORMAL_BUTTON.into();
-                border_color.0 = Color::BLACK;
+                border_color.0 = MY_BROWN;
             }
         }
     }

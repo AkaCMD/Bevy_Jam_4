@@ -9,6 +9,11 @@ mod game;
 fn main() {
     App::new()
         .insert_resource(AssetMetaCheck::Never) // Fix the wasm loading issue
+        .insert_resource(ClearColor(Color::rgb(
+            200.0 / 255.0,
+            200.0 / 255.0,
+            205.0 / 255.0,
+        )))
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
