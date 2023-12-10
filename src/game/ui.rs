@@ -182,7 +182,7 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
     .with_text_alignment(TextAlignment::Right)
     .with_style(Style {
         position_type: PositionType::Absolute,
-        top: Val::Px(300.0),
+        top: Val::Px(10.0),
         right: Val::Px(10.0),
         ..default()
     }),));

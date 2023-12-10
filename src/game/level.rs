@@ -37,12 +37,15 @@ pub struct Levels {
     pub level6: &'static str,
     pub level7: &'static str,
     pub level8: &'static str,
+    pub level9: &'static str,
+    pub level10: &'static str,
+    pub level11: &'static str,
 }
 // wasm version can't use std library
 impl Default for Levels {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
             include_str!("..\\..\\assets\\levels\\level1.txt"),
             include_str!("..\\..\\assets\\levels\\level2.txt"),
             include_str!("..\\..\\assets\\levels\\level3.txt"),
@@ -51,10 +54,13 @@ impl Default for Levels {
             include_str!("..\\..\\assets\\levels\\level6.txt"),
             include_str!("..\\..\\assets\\levels\\level7.txt"),
             include_str!("..\\..\\assets\\levels\\level8.txt"),
+            include_str!("..\\..\\assets\\levels\\level9.txt"),
+            include_str!("..\\..\\assets\\levels\\level10.txt"),
+            include_str!("..\\..\\assets\\levels\\level11.txt"),
         );
 
         #[cfg(target_os = "linux")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -63,10 +69,13 @@ impl Default for Levels {
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
             include_str!("../../assets/levels/level8.txt"),
+            include_str!("../../assets/levels/level9.txt"),
+            include_str!("../../assets/levels/level10.txt"),
+            include_str!("../../assets/levels/level11.txt"),
         );
 
         #[cfg(target_os = "macos")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -75,10 +84,13 @@ impl Default for Levels {
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
             include_str!("../../assets/levels/level8.txt"),
+            include_str!("../../assets/levels/level9.txt"),
+            include_str!("../../assets/levels/level10.txt"),
+            include_str!("../../assets/levels/level11.txt"),
         );
 
         #[cfg(target_arch = "wasm32")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -87,6 +99,9 @@ impl Default for Levels {
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
             include_str!("../../assets/levels/level8.txt"),
+            include_str!("../../assets/levels/level9.txt"),
+            include_str!("../../assets/levels/level10.txt"),
+            include_str!("../../assets/levels/level11.txt"),
         );
 
         Levels {
@@ -98,6 +113,9 @@ impl Default for Levels {
             level6,
             level7,
             level8,
+            level9,
+            level10,
+            level11,
         }
     }
 }
@@ -118,6 +136,9 @@ pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level
         6 => levels.level6,
         7 => levels.level7,
         8 => levels.level8,
+        9 => levels.level9,
+        10 => levels.level10,
+        11 => levels.level11,
         _ => return Err(GameError::FailToLoadLevels.into()),
     };
 

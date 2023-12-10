@@ -155,6 +155,7 @@ fn slip(
                 && level.0[position.1 - 1][position.0] != '@'
                 && level.0[position.1 - 1][position.0] != 'D'
                 && level.0[position.1 - 1][position.0] != 'P'
+                && level.0[position.1 - 1][position.0] != 'O'
                 && (!duck.is_stuffed || level.0[position.1 - 1][position.0] != 'B')
             {
                 position.1 -= 1;
@@ -174,6 +175,7 @@ fn slip(
                 && level.0[position.1 + 1][position.0] != '@'
                 && level.0[position.1 + 1][position.0] != 'D'
                 && level.0[position.1 + 1][position.0] != 'P'
+                && level.0[position.1 + 1][position.0] != 'O'
                 && (!duck.is_stuffed || level.0[position.1 + 1][position.0] != 'B')
             {
                 position.1 += 1;
@@ -193,6 +195,7 @@ fn slip(
                 && level.0[position.1][position.0 - 1] != '@'
                 && level.0[position.1][position.0 - 1] != 'D'
                 && level.0[position.1][position.0 - 1] != 'P'
+                && level.0[position.1][position.0 - 1] != 'O'
                 && (!duck.is_stuffed || level.0[position.1][position.0 - 1] != 'B')
             {
                 position.0 -= 1;
@@ -212,6 +215,7 @@ fn slip(
                 && level.0[position.1][position.0 + 1] != '@'
                 && level.0[position.1][position.0 + 1] != 'D'
                 && level.0[position.1][position.0 + 1] != 'P'
+                && level.0[position.1][position.0 + 1] != 'O'
                 && (!duck.is_stuffed || level.0[position.1][position.0 + 1] != 'B')
             {
                 position.0 += 1;
