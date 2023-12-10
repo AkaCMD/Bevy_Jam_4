@@ -159,6 +159,8 @@ enum ObjectType {
     DuckOnIce,
     BreadOnIce,
     BreakingIce,
+    DuckOnWater,
+    DuckOnBreakingIce,
 }
 
 #[derive(Component)]
@@ -286,6 +288,7 @@ fn spawn_duck(
         Duck {
             logic_position,
             is_stuffed: false,
+            can_move: true,
         },
         Object,
     ));
@@ -312,6 +315,8 @@ fn spawn_sprites(
                 'D' => ObjectType::DuckOnIce,
                 'B' => ObjectType::BreadOnIce,
                 '*' => ObjectType::BreakingIce,
+                'P' => ObjectType::DuckOnWater,
+                'O' => ObjectType::DuckOnBreakingIce,
                 _ => continue,
             };
 
@@ -324,7 +329,6 @@ fn spawn_sprites(
                 }
                 ObjectType::DuckOnIce => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
-                    //events.send(SpawnDuck((col_index, row_index)));
                     if !is_update {
                         spawn_duck(
                             commands,
@@ -345,6 +349,32 @@ fn spawn_sprites(
                         position,
                         asset_server.load("sprites/breaking_ice.png"),
                     );
+                }
+                ObjectType::DuckOnWater => {
+                    spawn_object(commands, position, asset_server.load("sprites/water.png"));
+                    if !is_update {
+                        spawn_duck(
+                            commands,
+                            position,
+                            asset_server.load("sprites/duck.png"),
+                            (col_index, row_index),
+                        );
+                    }
+                }
+                ObjectType::DuckOnBreakingIce => {
+                    spawn_object(
+                        commands,
+                        position,
+                        asset_server.load("sprites/breaking_ice.png"),
+                    );
+                    if !is_update {
+                        spawn_duck(
+                            commands,
+                            position,
+                            asset_server.load("sprites/duck.png"),
+                            (col_index, row_index),
+                        );
+                    }
                 }
             };
         }

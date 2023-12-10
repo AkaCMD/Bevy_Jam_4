@@ -16,6 +16,7 @@ impl bevy::app::Plugin for Plugin {
 pub struct Duck {
     pub logic_position: (usize, usize),
     pub is_stuffed: bool, // one duck, one bread
+    pub can_move: bool,   // stuffed_duck on breaking_ice => can't move
 }
 
 // the chosen duck
@@ -57,6 +58,9 @@ fn player_movement(
 ) {
     if let Ok((transform, mut sprite, mut image, mut duck, entity)) = player_query.get_single_mut()
     {
+        if !duck.can_move {
+            return;
+        }
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
@@ -76,8 +80,10 @@ fn player_movement(
         }
         if direction != utils::Direction::None {
             let duck_is_stuffed_before = duck.is_stuffed;
+            let duck_can_move_before = duck.can_move;
             let end_position = slip(&mut duck, direction, level);
             let duck_is_stuffed_after = duck.is_stuffed;
+            let duck_can_move_after = duck.can_move;
 
             // TODO: delay it
             if !duck_is_stuffed_before && duck_is_stuffed_after {
@@ -87,6 +93,14 @@ fn player_movement(
                     volume: bevy::audio::Volume::new_absolute(0.2),
                 });
                 *image = asset_server.load("sprites/stuffed_duck.png");
+            }
+
+            if duck_can_move_before && !duck_can_move_after {
+                // play ice breaking sound
+                events_sfx.send(PlaySFX {
+                    path: "audio/ice_breaking.ogg".to_string(),
+                    volume: bevy::audio::Volume::new_absolute(0.4),
+                });
             }
 
             // Update object positions
@@ -140,11 +154,17 @@ fn slip(
             while position.1 > 0
                 && level.0[position.1 - 1][position.0] != '@'
                 && level.0[position.1 - 1][position.0] != 'D'
+                && level.0[position.1 - 1][position.0] != 'P'
                 && (!duck.is_stuffed || level.0[position.1 - 1][position.0] != 'B')
             {
                 position.1 -= 1;
-                if level.0[position.1][position.0] == 'B' {
+                let check_pos = level.0[position.1][position.0];
+                if check_pos == 'B' {
                     duck.is_stuffed = true;
+                    break;
+                }
+                if check_pos == '*' && duck.is_stuffed {
+                    duck.can_move = false;
                     break;
                 }
             }
@@ -153,11 +173,17 @@ fn slip(
             while position.1 < rows - 1
                 && level.0[position.1 + 1][position.0] != '@'
                 && level.0[position.1 + 1][position.0] != 'D'
+                && level.0[position.1 + 1][position.0] != 'P'
                 && (!duck.is_stuffed || level.0[position.1 + 1][position.0] != 'B')
             {
                 position.1 += 1;
-                if level.0[position.1][position.0] == 'B' {
+                let check_pos = level.0[position.1][position.0];
+                if check_pos == 'B' {
                     duck.is_stuffed = true;
+                    break;
+                }
+                if check_pos == '*' && duck.is_stuffed {
+                    duck.can_move = false;
                     break;
                 }
             }
@@ -166,11 +192,17 @@ fn slip(
             while position.0 > 0
                 && level.0[position.1][position.0 - 1] != '@'
                 && level.0[position.1][position.0 - 1] != 'D'
+                && level.0[position.1][position.0 - 1] != 'P'
                 && (!duck.is_stuffed || level.0[position.1][position.0 - 1] != 'B')
             {
                 position.0 -= 1;
-                if level.0[position.1][position.0] == 'B' {
+                let check_pos = level.0[position.1][position.0];
+                if check_pos == 'B' {
                     duck.is_stuffed = true;
+                    break;
+                }
+                if check_pos == '*' && duck.is_stuffed {
+                    duck.can_move = false;
                     break;
                 }
             }
@@ -179,18 +211,35 @@ fn slip(
             while position.0 < cols - 1
                 && level.0[position.1][position.0 + 1] != '@'
                 && level.0[position.1][position.0 + 1] != 'D'
+                && level.0[position.1][position.0 + 1] != 'P'
                 && (!duck.is_stuffed || level.0[position.1][position.0 + 1] != 'B')
             {
                 position.0 += 1;
-                if level.0[position.1][position.0] == 'B' {
+                let check_pos = level.0[position.1][position.0];
+                if check_pos == 'B' {
                     duck.is_stuffed = true;
+                    break;
+                }
+                if check_pos == '*' && duck.is_stuffed {
+                    duck.can_move = false;
                     break;
                 }
             }
         }
         _ => (),
     }
-    level.0[logic_position.1][logic_position.0] = '#';
-    level.0[position.1][position.0] = 'D';
+    if level.0[logic_position.1][logic_position.0] == 'O' {
+        level.0[logic_position.1][logic_position.0] = '*';
+    } else {
+        level.0[logic_position.1][logic_position.0] = '#';
+    }
+    if level.0[position.1][position.0] == '*' {
+        level.0[position.1][position.0] = 'O';
+    } else {
+        level.0[position.1][position.0] = 'D';
+    }
+    if !duck.can_move {
+        level.0[position.1][position.0] = 'P';
+    }
     position
 }
