@@ -60,7 +60,6 @@ fn get_cursor_position(
                             ),
                             rotation: Quat::IDENTITY,
                             scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
-                            ..default()
                         },
                         texture: asset_server.load("sprites/arrow.png"),
                         ..default()

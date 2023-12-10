@@ -36,12 +36,13 @@ pub struct Levels {
     pub level5: &'static str,
     pub level6: &'static str,
     pub level7: &'static str,
+    pub level8: &'static str,
 }
 // wasm version can't use std library
 impl Default for Levels {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
-        let (level1, level2, level3, level4, level5, level6, level7) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
             include_str!("..\\..\\assets\\levels\\level1.txt"),
             include_str!("..\\..\\assets\\levels\\level2.txt"),
             include_str!("..\\..\\assets\\levels\\level3.txt"),
@@ -49,10 +50,11 @@ impl Default for Levels {
             include_str!("..\\..\\assets\\levels\\level5.txt"),
             include_str!("..\\..\\assets\\levels\\level6.txt"),
             include_str!("..\\..\\assets\\levels\\level7.txt"),
+            include_str!("..\\..\\assets\\levels\\level8.txt"),
         );
 
         #[cfg(target_os = "linux")]
-        let (level1, level2, level3, level4, level5, level6, level7) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -60,10 +62,11 @@ impl Default for Levels {
             include_str!("../../assets/levels/level5.txt"),
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
+            include_str!("../../assets/levels/level8.txt"),
         );
 
         #[cfg(target_os = "macos")]
-        let (level1, level2, level3, level4, level5, level6, level7) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -71,10 +74,11 @@ impl Default for Levels {
             include_str!("../../assets/levels/level5.txt"),
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
+            include_str!("../../assets/levels/level8.txt"),
         );
 
         #[cfg(target_arch = "wasm32")]
-        let (level1, level2, level3, level4, level5, level6, level7) = (
+        let (level1, level2, level3, level4, level5, level6, level7, level8) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -82,6 +86,7 @@ impl Default for Levels {
             include_str!("../../assets/levels/level5.txt"),
             include_str!("../../assets/levels/level6.txt"),
             include_str!("../../assets/levels/level7.txt"),
+            include_str!("../../assets/levels/level8.txt"),
         );
 
         Levels {
@@ -92,6 +97,7 @@ impl Default for Levels {
             level5,
             level6,
             level7,
+            level8,
         }
     }
 }
@@ -111,6 +117,7 @@ pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level
         5 => levels.level5,
         6 => levels.level6,
         7 => levels.level7,
+        8 => levels.level8,
         _ => return Err(GameError::FailToLoadLevels.into()),
     };
 
@@ -151,6 +158,7 @@ enum ObjectType {
     Ice,
     DuckOnIce,
     BreadOnIce,
+    BreakingIce,
 }
 
 #[derive(Component)]
@@ -303,6 +311,7 @@ fn spawn_sprites(
                 '#' => ObjectType::Ice,
                 'D' => ObjectType::DuckOnIce,
                 'B' => ObjectType::BreadOnIce,
+                '*' => ObjectType::BreakingIce,
                 _ => continue,
             };
 
@@ -329,6 +338,13 @@ fn spawn_sprites(
                     bread_count.0 += 1;
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     spawn_upper_object(commands, position, asset_server.load("sprites/bread.png"));
+                }
+                ObjectType::BreakingIce => {
+                    spawn_object(
+                        commands,
+                        position,
+                        asset_server.load("sprites/breaking_ice.png"),
+                    );
                 }
             };
         }
