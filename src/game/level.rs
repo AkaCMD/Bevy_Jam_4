@@ -701,29 +701,27 @@ fn undo_the_level(
     mut events: EventWriter<Won>,
     object_query: Query<Entity, With<Object>>,
 ) {
-    if input.just_pressed(KeyCode::Z) {
-        if level_stack.0.size() >= 2 {
-            level_stack.0.pop();
-            let origin_level = level_stack.0.peek().unwrap().clone();
-            level.0 = origin_level;
-            // for row in level.0.iter() {
-            //     for ch in row {
-            //         print!("{}", ch);
-            //     }
-            //     println!();
-            // }
-            for object in &object_query {
-                commands.entity(object).despawn();
-            }
-            spawn_sprites(
-                &mut commands,
-                &level.0,
-                &asset_server,
-                level_index.0,
-                &mut bread_count,
-                &mut events,
-                true,
-            );
+    if input.just_pressed(KeyCode::Z) && level_stack.0.size() >= 2 {
+        level_stack.0.pop();
+        let origin_level = level_stack.0.peek().unwrap().clone();
+        level.0 = origin_level;
+        // for row in level.0.iter() {
+        //     for ch in row {
+        //         print!("{}", ch);
+        //     }
+        //     println!();
+        // }
+        for object in &object_query {
+            commands.entity(object).despawn();
         }
+        spawn_sprites(
+            &mut commands,
+            &level.0,
+            &asset_server,
+            level_index.0,
+            &mut bread_count,
+            &mut events,
+            true,
+        );
     }
 }
