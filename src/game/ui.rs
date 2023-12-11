@@ -156,6 +156,7 @@ fn show_level_title(
 // Click to choose the duck
 // WASD to move
 // R to reset
+// Z to undo
 // One duck, one bread
 fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
     let text_style_important = TextStyle {
@@ -175,6 +176,8 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextSection::new("to move\n", text_style_normal.clone()),
         TextSection::new("R ", text_style_important.clone()),
         TextSection::new("to reset\n", text_style_normal.clone()),
+        TextSection::new("Z ", text_style_important.clone()),
+        TextSection::new("to undo\n", text_style_normal.clone()),
         TextSection::new("[ ] ", text_style_important.clone()),
         TextSection::new("to skip levels\n\n", text_style_normal.clone()),
         TextSection::new("One duck, one bread\n", text_style_important.clone()),

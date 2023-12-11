@@ -1,7 +1,7 @@
 use super::{cursor::ArrowHint, player::Duck, ui::Won, *};
 use bevy::utils::thiserror;
 use thiserror::Error;
-
+// TODO: code refactor
 pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
@@ -12,6 +12,7 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<CurrentLevelIndex>()
             .init_resource::<BreadCount>()
             .init_resource::<TotalBreadCount>()
+            .init_resource::<LevelStack>()
             //.add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
             .add_systems(
@@ -22,6 +23,7 @@ impl bevy::app::Plugin for Plugin {
                     level_restart,
                     load_other_level,
                     change_level_cheats,
+                    undo_the_level,
                 ),
             );
     }
@@ -45,7 +47,19 @@ pub struct Levels {
 impl Default for Levels {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
+        let (
+            level1,
+            level2,
+            level3,
+            level4,
+            level5,
+            level6,
+            level7,
+            level8,
+            level9,
+            level10,
+            level11,
+        ) = (
             include_str!("..\\..\\assets\\levels\\level1.txt"),
             include_str!("..\\..\\assets\\levels\\level2.txt"),
             include_str!("..\\..\\assets\\levels\\level3.txt"),
@@ -60,7 +74,19 @@ impl Default for Levels {
         );
 
         #[cfg(target_os = "linux")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
+        let (
+            level1,
+            level2,
+            level3,
+            level4,
+            level5,
+            level6,
+            level7,
+            level8,
+            level9,
+            level10,
+            level11,
+        ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -75,7 +101,19 @@ impl Default for Levels {
         );
 
         #[cfg(target_os = "macos")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
+        let (
+            level1,
+            level2,
+            level3,
+            level4,
+            level5,
+            level6,
+            level7,
+            level8,
+            level9,
+            level10,
+            level11,
+        ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -90,7 +128,19 @@ impl Default for Levels {
         );
 
         #[cfg(target_arch = "wasm32")]
-        let (level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11) = (
+        let (
+            level1,
+            level2,
+            level3,
+            level4,
+            level5,
+            level6,
+            level7,
+            level8,
+            level9,
+            level10,
+            level11,
+        ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
             include_str!("../../assets/levels/level3.txt"),
@@ -151,6 +201,54 @@ pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level
     Ok(Level(level_data))
 }
 
+// Define a generic Stack struct
+pub struct Stack<T> {
+    items: Vec<T>,
+}
+
+impl<T> Stack<T> {
+    // Create a new empty stack
+    pub fn new() -> Stack<T> {
+        Stack { items: Vec::new() }
+    }
+
+    // Check if the stack is empty
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
+    // Push an item onto the stack
+    pub fn push(&mut self, item: T) {
+        self.items.push(item);
+    }
+
+    // Pop an item from the stack
+    pub fn pop(&mut self) -> Option<T> {
+        self.items.pop()
+    }
+
+    // Peek at the top item of the stack without removing it
+    pub fn peek(&self) -> Option<&T> {
+        self.items.last()
+    }
+
+    // Clear the stack
+    pub fn clear(&mut self) {
+        while !self.is_empty() {
+            self.pop();
+        }
+    }
+}
+
+#[derive(Resource)]
+pub struct LevelStack(pub Stack<Vec<Vec<char>>>);
+
+impl Default for LevelStack {
+    fn default() -> Self {
+        LevelStack(Stack::new())
+    }
+}
+
 #[derive(Resource, Default)]
 pub struct Level(pub Vec<Vec<char>>);
 
@@ -208,23 +306,29 @@ fn spawn_level(
     mut commands: Commands,
     // resource
     asset_server: Res<AssetServer>,
-    level_index: ResMut<CurrentLevelIndex>,
+    level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut total_bread_count: ResMut<TotalBreadCount>,
     levels: Res<Levels>,
+    mut level_stack: ResMut<LevelStack>,
     // event
     mut events: EventWriter<Won>,
 ) {
     // Load the level from a .txt file
     if let Ok(level) = load_level(level_index.0, levels) {
+        // clear the stack
+        level_stack.0.clear();
+
         spawn_sprites(
             &mut commands,
             &level.0,
             &asset_server,
+            level_index.0,
             &mut bread_count,
             &mut events,
-            false,
+            true,
         );
+        level_stack.0.push(level.0.clone());
         commands.insert_resource(level);
         total_bread_count.0 = bread_count.0;
     }
@@ -240,7 +344,9 @@ fn update_level(
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
+    level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
+    mut level_stack: ResMut<LevelStack>,
 ) {
     for _ in events_update.read() {
         // Do not despawn ducks, update the translations of ducks
@@ -248,14 +354,15 @@ fn update_level(
         for object in &object_query {
             commands.entity(object).despawn();
         }
-
+        level_stack.0.push(level.0.clone());
         spawn_sprites(
             &mut commands,
             &level.0,
             &asset_server,
+            level_index.0,
             &mut bread_count,
             &mut events,
-            true,
+            false,
         );
     }
 }
@@ -280,7 +387,7 @@ pub fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handl
         SpriteBundle {
             texture: sprite,
             transform: Transform {
-                translation: Vec3::new(position.x, position.y, 1.0),
+                translation: Vec3::new(position.x, position.y, position.z + 1.0),
                 rotation: Quat::IDENTITY,
                 scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
             },
@@ -295,6 +402,8 @@ fn spawn_duck(
     position: Vec3,
     sprite: Handle<Image>,
     logic_position: (usize, usize),
+    level_index: i32,
+    asset_server: &Res<AssetServer>,
 ) {
     commands.spawn((
         SpriteBundle {
@@ -313,17 +422,26 @@ fn spawn_duck(
         },
         Object,
     ));
+    // Show click hint
+    if level_index == 1 {
+        spawn_upper_object(
+            commands,
+            Vec3::new(position.x + 120.0, position.y - 120.0, 1.0),
+            asset_server.load("sprites/click_hint.png"),
+        );
+    }
 }
 
 fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
     asset_server: &Res<AssetServer>,
+    level_index: i32,
     bread_count: &mut ResMut<BreadCount>,
     // event
     events: &mut EventWriter<Won>,
     // when updates, do not respawn ducks
-    is_update: bool,
+    should_respawn_duck: bool,
 ) {
     bread_count.0 = 0;
     // spawn the sprites
@@ -350,12 +468,14 @@ fn spawn_sprites(
                 }
                 ObjectType::DuckOnIce => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
-                    if !is_update {
+                    if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
                             asset_server.load("sprites/duck.png"),
                             (col_index, row_index),
+                            level_index,
+                            asset_server,
                         );
                     }
                 }
@@ -373,12 +493,14 @@ fn spawn_sprites(
                 }
                 ObjectType::DuckOnWater => {
                     spawn_object(commands, position, asset_server.load("sprites/water.png"));
-                    if !is_update {
+                    if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
                             asset_server.load("sprites/duck.png"),
                             (col_index, row_index),
+                            level_index,
+                            asset_server,
                         );
                     }
                 }
@@ -388,12 +510,14 @@ fn spawn_sprites(
                         position,
                         asset_server.load("sprites/breaking_ice.png"),
                     );
-                    if !is_update {
+                    if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
                             asset_server.load("sprites/duck.png"),
                             (col_index, row_index),
+                            level_index,
+                            asset_server,
                         );
                     }
                 }
@@ -433,8 +557,9 @@ fn level_restart(
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
-    level_index: ResMut<CurrentLevelIndex>,
+    level_index: Res<CurrentLevelIndex>,
     levels: Res<Levels>,
+    level_stack: ResMut<LevelStack>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -454,6 +579,7 @@ fn level_restart(
             bread_count,
             total_bread_count,
             levels,
+            level_stack,
             events,
         );
     }
@@ -464,11 +590,12 @@ fn load_other_level(
     // query
     object_query: Query<Entity, With<Object>>,
     // resource
-    level_index: ResMut<CurrentLevelIndex>,
+    level_index: Res<CurrentLevelIndex>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
     levels: Res<Levels>,
+    level_stack: ResMut<LevelStack>,
     // event
     events: EventWriter<Won>,
 ) {
@@ -484,6 +611,7 @@ fn load_other_level(
             bread_count,
             total_bread_count,
             levels,
+            level_stack,
             events,
         )
     }
@@ -506,5 +634,46 @@ fn change_level_cheats(
     if load_level(level_index.0, levels).is_err() {
         //info!("Invalid level index");
         level_index.0 = origin_index;
+    }
+}
+
+// Undo
+fn undo_the_level(
+    mut commands: Commands,
+    input: Res<Input<KeyCode>>,
+    mut level_stack: ResMut<LevelStack>,
+    asset_server: Res<AssetServer>,
+    level_index: Res<CurrentLevelIndex>,
+    mut bread_count: ResMut<BreadCount>,
+    mut level: ResMut<Level>,
+    mut events: EventWriter<Won>,
+    object_query: Query<Entity, With<Object>>,
+) {
+    if input.just_pressed(KeyCode::Z) {
+        if !level_stack.0.is_empty() {
+            level_stack.0.pop();
+        }
+        if !level_stack.0.is_empty() {
+            let origin_level = level_stack.0.peek().unwrap().clone();
+            level.0 = origin_level;
+            for row in level.0.iter() {
+                for ch in row {
+                    print!("{}", ch);
+                }
+                println!();
+            }
+            for object in &object_query {
+                commands.entity(object).despawn();
+            }
+            spawn_sprites(
+                &mut commands,
+                &level.0,
+                &asset_server,
+                level_index.0,
+                &mut bread_count,
+                &mut events,
+                true,
+            );
+        }
     }
 }
