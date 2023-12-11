@@ -25,3 +25,6 @@ too_many_arguments = "allow"
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"
+
+[build-dependencies]
+embed-resource = "2.4.0"
