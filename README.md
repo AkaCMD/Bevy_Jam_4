@@ -17,3 +17,15 @@ Game made for Bevy Jam 4 🦀 in 9 days
 - **[ ]**: skip levels
 
 **PROGRAMMING, ART, DESIGN by Minda Chen**
+
+
+
+---
+
+Free audio assets (thanks!):
+
+https://freesound.org/people/TheoJT/sounds/698280/
+
+https://freesound.org/people/DrMaysta/sounds/418509/
+
+https://freesound.org/people/Foleyhaven/sounds/624163/
