@@ -217,6 +217,11 @@ impl<T> Stack<T> {
         self.items.is_empty()
     }
 
+    // Get the size of the stack
+    pub fn size(&self) -> usize {
+        self.items.len()
+    }
+
     // Push an item onto the stack
     pub fn push(&mut self, item: T) {
         self.items.push(item);
@@ -276,6 +281,7 @@ enum ObjectType {
     Wall,
     Ice,
     DuckOnIce,
+    StuffedDuckOnIce,
     BreadOnIce,
     BreakingIce,
     DuckOnWater,
@@ -404,6 +410,8 @@ fn spawn_duck(
     logic_position: (usize, usize),
     level_index: i32,
     asset_server: &Res<AssetServer>,
+    is_stuffed: bool,
+    can_move: bool,
 ) {
     commands.spawn((
         SpriteBundle {
@@ -417,8 +425,8 @@ fn spawn_duck(
         },
         Duck {
             logic_position,
-            is_stuffed: false,
-            can_move: true,
+            is_stuffed,
+            can_move,
         },
         Object,
     ));
@@ -456,6 +464,7 @@ fn spawn_sprites(
                 '*' => ObjectType::BreakingIce,
                 'P' => ObjectType::DuckOnWater,
                 'O' => ObjectType::DuckOnBreakingIce,
+                'Q' => ObjectType::StuffedDuckOnIce,
                 _ => continue,
             };
 
@@ -476,6 +485,23 @@ fn spawn_sprites(
                             (col_index, row_index),
                             level_index,
                             asset_server,
+                            false,
+                            true,
+                        );
+                    }
+                }
+                ObjectType::StuffedDuckOnIce => {
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    if should_respawn_duck {
+                        spawn_duck(
+                            commands,
+                            position,
+                            asset_server.load("sprites/stuffed_duck.png"),
+                            (col_index, row_index),
+                            level_index,
+                            asset_server,
+                            true,
+                            true,
                         );
                     }
                 }
@@ -497,10 +523,12 @@ fn spawn_sprites(
                         spawn_duck(
                             commands,
                             position,
-                            asset_server.load("sprites/duck.png"),
+                            asset_server.load("sprites/stuffed_duck.png"),
                             (col_index, row_index),
                             level_index,
                             asset_server,
+                            true,
+                            false,
                         );
                     }
                 }
@@ -518,6 +546,8 @@ fn spawn_sprites(
                             (col_index, row_index),
                             level_index,
                             asset_server,
+                            false,
+                            true,
                         );
                     }
                 }
@@ -650,18 +680,16 @@ fn undo_the_level(
     object_query: Query<Entity, With<Object>>,
 ) {
     if input.just_pressed(KeyCode::Z) {
-        if !level_stack.0.is_empty() {
+        if level_stack.0.size() >= 2 {
             level_stack.0.pop();
-        }
-        if !level_stack.0.is_empty() {
             let origin_level = level_stack.0.peek().unwrap().clone();
             level.0 = origin_level;
-            for row in level.0.iter() {
-                for ch in row {
-                    print!("{}", ch);
-                }
-                println!();
-            }
+            // for row in level.0.iter() {
+            //     for ch in row {
+            //         print!("{}", ch);
+            //     }
+            //     println!();
+            // }
             for object in &object_query {
                 commands.entity(object).despawn();
             }

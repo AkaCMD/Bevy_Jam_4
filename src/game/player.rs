@@ -156,6 +156,7 @@ fn slip(
                 && level.0[position.1 - 1][position.0] != 'D'
                 && level.0[position.1 - 1][position.0] != 'P'
                 && level.0[position.1 - 1][position.0] != 'O'
+                && level.0[position.1 - 1][position.0] != 'Q'
                 && (!duck.is_stuffed || level.0[position.1 - 1][position.0] != 'B')
             {
                 position.1 -= 1;
@@ -176,6 +177,7 @@ fn slip(
                 && level.0[position.1 + 1][position.0] != 'D'
                 && level.0[position.1 + 1][position.0] != 'P'
                 && level.0[position.1 + 1][position.0] != 'O'
+                && level.0[position.1 + 1][position.0] != 'Q'
                 && (!duck.is_stuffed || level.0[position.1 + 1][position.0] != 'B')
             {
                 position.1 += 1;
@@ -196,6 +198,7 @@ fn slip(
                 && level.0[position.1][position.0 - 1] != 'D'
                 && level.0[position.1][position.0 - 1] != 'P'
                 && level.0[position.1][position.0 - 1] != 'O'
+                && level.0[position.1][position.0 - 1] != 'Q'
                 && (!duck.is_stuffed || level.0[position.1][position.0 - 1] != 'B')
             {
                 position.0 -= 1;
@@ -216,6 +219,7 @@ fn slip(
                 && level.0[position.1][position.0 + 1] != 'D'
                 && level.0[position.1][position.0 + 1] != 'P'
                 && level.0[position.1][position.0 + 1] != 'O'
+                && level.0[position.1][position.0 + 1] != 'Q'
                 && (!duck.is_stuffed || level.0[position.1][position.0 + 1] != 'B')
             {
                 position.0 += 1;
@@ -232,6 +236,11 @@ fn slip(
         }
         _ => (),
     }
+    let mut duck_char: char = 'D';
+    if duck.is_stuffed {
+        duck_char = 'Q';
+    }
+
     if level.0[logic_position.1][logic_position.0] == 'O' {
         level.0[logic_position.1][logic_position.0] = '*';
     } else {
@@ -240,7 +249,7 @@ fn slip(
     if level.0[position.1][position.0] == '*' {
         level.0[position.1][position.0] = 'O';
     } else {
-        level.0[position.1][position.0] = 'D';
+        level.0[position.1][position.0] = duck_char;
     }
     if !duck.can_move {
         level.0[position.1][position.0] = 'P';
