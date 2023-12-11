@@ -42,6 +42,8 @@ pub struct Levels {
     pub level9: &'static str,
     pub level10: &'static str,
     pub level11: &'static str,
+    pub level12: &'static str,
+    pub level13: &'static str,
 }
 // wasm version can't use std library
 impl Default for Levels {
@@ -59,6 +61,8 @@ impl Default for Levels {
             level9,
             level10,
             level11,
+            level12,
+            level13,
         ) = (
             include_str!("..\\..\\assets\\levels\\level1.txt"),
             include_str!("..\\..\\assets\\levels\\level2.txt"),
@@ -71,6 +75,8 @@ impl Default for Levels {
             include_str!("..\\..\\assets\\levels\\level9.txt"),
             include_str!("..\\..\\assets\\levels\\level10.txt"),
             include_str!("..\\..\\assets\\levels\\level11.txt"),
+            include_str!("..\\..\\assets\\levels\\level12.txt"),
+            include_str!("..\\..\\assets\\levels\\level13.txt"),
         );
 
         #[cfg(target_os = "linux")]
@@ -86,6 +92,8 @@ impl Default for Levels {
             level9,
             level10,
             level11,
+            level12,
+            level13,
         ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
@@ -98,6 +106,8 @@ impl Default for Levels {
             include_str!("../../assets/levels/level9.txt"),
             include_str!("../../assets/levels/level10.txt"),
             include_str!("../../assets/levels/level11.txt"),
+            include_str!("../../assets/levels/level12.txt"),
+            include_str!("../../assets/levels/level13.txt"),
         );
 
         #[cfg(target_os = "macos")]
@@ -113,6 +123,8 @@ impl Default for Levels {
             level9,
             level10,
             level11,
+            level12,
+            level13,
         ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
@@ -125,6 +137,8 @@ impl Default for Levels {
             include_str!("../../assets/levels/level9.txt"),
             include_str!("../../assets/levels/level10.txt"),
             include_str!("../../assets/levels/level11.txt"),
+            include_str!("../../assets/levels/level12.txt"),
+            include_str!("../../assets/levels/level13.txt"),
         );
 
         #[cfg(target_arch = "wasm32")]
@@ -140,6 +154,8 @@ impl Default for Levels {
             level9,
             level10,
             level11,
+            level12,
+            level13,
         ) = (
             include_str!("../../assets/levels/level1.txt"),
             include_str!("../../assets/levels/level2.txt"),
@@ -152,6 +168,8 @@ impl Default for Levels {
             include_str!("../../assets/levels/level9.txt"),
             include_str!("../../assets/levels/level10.txt"),
             include_str!("../../assets/levels/level11.txt"),
+            include_str!("../../assets/levels/level12.txt"),
+            include_str!("../../assets/levels/level13.txt"),
         );
 
         Levels {
@@ -166,6 +184,8 @@ impl Default for Levels {
             level9,
             level10,
             level11,
+            level12,
+            level13,
         }
     }
 }
@@ -189,6 +209,8 @@ pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level
         9 => levels.level9,
         10 => levels.level10,
         11 => levels.level11,
+        12 => levels.level12,
+        13 => levels.level13,
         _ => return Err(GameError::FailToLoadLevels.into()),
     };
 
