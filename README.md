@@ -6,6 +6,7 @@ Game made for Bevy Jam 4 🦀 in 9 days
 [🎮 PLAY THE GAME ON ITCH.IO](https://akacmd.itch.io/quark-on-ice "QUARK!!! on ICE")
 
 ### One duck, one bread.
+### LOADS OF DUCKS!
 
 ## CONTROLS
 

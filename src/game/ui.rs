@@ -225,6 +225,7 @@ fn won(
     asset_server: Res<AssetServer>,
     mut events: EventReader<Won>,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    level_index: Res<CurrentLevelIndex>,
 ) {
     for _ in events.read() {
         let window = window_query.get_single().unwrap();
@@ -246,6 +247,12 @@ fn won(
             }),
             MutUI,
         ));
+
+        let mut button_text = "Next Level";
+        if level_index.0 == 13 {
+            // TODO: hardcoded, change it later
+            button_text = "The End?";
+        }
 
         // Show next level button
         commands
@@ -281,7 +288,7 @@ fn won(
                     .with_children(|parent| {
                         parent
                             .spawn(TextBundle::from_section(
-                                "Next Level",
+                                button_text,
                                 TextStyle {
                                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
                                     font_size: 20.0,
