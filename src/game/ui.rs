@@ -37,7 +37,7 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
     // game title
     commands.spawn(
         TextBundle::from_section(
-            "QUARK!!! on ICE",
+            "QUACK!!! on ICE",
             TextStyle {
                 font: asset_server.load("fonts/NotJamChunky8.ttf"),
                 font_size: 30.0,

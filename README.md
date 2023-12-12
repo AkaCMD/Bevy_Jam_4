@@ -1,9 +1,9 @@
-# QUARK!!! on ICE
+# QUACK!!! on ICE
 Game made for Bevy Jam 4 🦀 in 9 days
 
 🦆🦆🦆 It's a puzzle game about a group of ducks eating bread on the ice
 
-[🎮 PLAY THE GAME ON ITCH.IO](https://akacmd.itch.io/quark-on-ice "QUARK!!! on ICE")
+[🎮 PLAY THE GAME ON ITCH.IO](https://akacmd.itch.io/quark-on-ice "QUACK!!! on ICE")
 
 ### One duck, one bread.
 ### LOADS OF DUCKS!
