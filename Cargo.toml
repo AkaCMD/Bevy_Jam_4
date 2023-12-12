@@ -1,5 +1,5 @@
 [package]
-name = "quark_on_ice"
+name = "quack_on_ice"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
