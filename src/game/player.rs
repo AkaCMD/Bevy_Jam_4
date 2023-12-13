@@ -123,7 +123,7 @@ fn player_movement(
 
             // play quark sound
             events_sfx.send(PlaySFX {
-                path: "audio/quark.wav".to_string(),
+                path: "audio/quark.ogg".to_string(),
                 volume: bevy::audio::Volume::new_absolute(0.5),
             });
             //events_print.send(PrintLevel);
