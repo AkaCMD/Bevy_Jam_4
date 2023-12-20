@@ -18,14 +18,6 @@ pub const MY_BROWN: Color = Color::rgb(91.0 / 255.0, 75.0 / 255.0, 73.0 / 255.0)
 pub const DARK_MODE_BG_COLOR: Color = Color::rgb(45.0 / 255.0, 47.0 / 255.0, 47.0 / 255.0);
 pub const LIGHT_MODE_BG_COLOR: Color = Color::rgb(200.0 / 255.0, 200.0 / 255.0, 205.0 / 255.0);
 
-#[derive(Resource)]
-pub struct ResizeFactor(f32);
-impl Default for ResizeFactor {
-    fn default() -> Self {
-        ResizeFactor(0.1)
-    }
-}
-
 pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
@@ -37,9 +29,7 @@ impl bevy::app::Plugin for Plugin {
             ui::Plugin,
             cursor::Plugin,
         ))
-        .init_resource::<ResizeFactor>()
-        .add_systems(Startup, spawn_camera)
-        .add_systems(Update, on_resize_window);
+        .add_systems(Startup, spawn_camera);
     }
 }
 
@@ -54,14 +44,3 @@ fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Primar
 }
 
 // TODO: How to scale all the ui elements?
-fn on_resize_window(
-    mut resize_reader: EventReader<bevy::window::WindowResized>,
-    mut resize_factor: ResMut<ResizeFactor>,
-) {
-    for e in resize_reader.read() {
-        resize_factor.0 = 0.1 * e.height / 720.0;
-        info!("{}", resize_factor.0);
-
-        // Resize all the ui
-    }
-}

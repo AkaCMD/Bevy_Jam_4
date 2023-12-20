@@ -65,14 +65,14 @@ fn get_cursor_position(
                         ..default()
                     },
                     ArrowHint,
-                    level::Object,
+                    //level::Object,
                 ));
             }
         }
     }
 }
 
-fn click_detection(
+pub fn click_detection(
     mut commands: Commands,
     // event
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
@@ -96,7 +96,7 @@ fn click_detection(
                     //info!("You are the chosen one!");
                     commands
                         .entity(entity)
-                        .insert(Player)
+                        .insert(Player) // error[B0003]: Could not insert a bundle
                         .with_children(|parent| {
                             parent.spawn((
                                 SpriteBundle {
