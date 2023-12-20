@@ -10,6 +10,7 @@ anyhow = "1.0.75"
 bevy = {version = "0.12.1", features = ["wav", "wayland"]}
 bevy_tweening = "0.9"
 wasm-bindgen = "0.2.89"
+bevy-inspector-egui = "0.21.0"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -28,3 +29,6 @@ runner = "wasm-server-runner"
 
 [build-dependencies]
 embed-resource = "2.4.0"
+
+[workspace]
+resolver = "2" # Important! wgpu/Bevy needs this!

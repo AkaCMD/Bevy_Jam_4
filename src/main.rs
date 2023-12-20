@@ -2,18 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
+//use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_tweening::TweeningPlugin;
 
 mod game;
 
 fn main() {
     App::new()
-        .insert_resource(AssetMetaCheck::Never) // Fix the wasm loading issue
-        .insert_resource(ClearColor(Color::rgb(
-            200.0 / 255.0,
-            200.0 / 255.0,
-            205.0 / 255.0,
-        )))
+        .insert_resource(AssetMetaCheck::Never)
+        .insert_resource(ClearColor(game::LIGHT_MODE_BG_COLOR))
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -31,5 +28,6 @@ fn main() {
         )
         .add_plugins(game::Plugin)
         .add_plugins(TweeningPlugin)
+        //.add_plugins(WorldInspectorPlugin::new()) // Only add this in debug version
         .run();
 }
