@@ -12,7 +12,7 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
-const DISTANCE: f32 = 33.0;
+const DISTANCE: f32 = (640.0 / 2.0 + 10.0) * RESIZE;
 
 #[derive(Component)]
 pub struct ArrowHint;

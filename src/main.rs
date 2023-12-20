@@ -19,7 +19,7 @@ fn main() {
                         mode: bevy::window::WindowMode::Windowed,
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
-                        resizable: false, // TODO: fix the resize issue
+                        resizable: false,
                         ..default()
                     }),
                     ..default()

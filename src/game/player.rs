@@ -1,13 +1,11 @@
 use super::{audio::PlaySFX, level::UpdateLevel, *};
 use bevy::utils::Duration;
-use bevy::window::PrimaryWindow;
 
 pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_camera)
-            .add_systems(Update, player_movement)
+        app.add_systems(Update, player_movement)
             .add_systems(Update, component_animator_system::<Transform>);
     }
 }
@@ -25,14 +23,6 @@ pub struct Player;
 
 #[derive(Event, Default)]
 pub struct SpawnDuck(pub (usize, usize));
-
-fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
-    let window = window_query.get_single().unwrap();
-    commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
-        ..default()
-    });
-}
 
 fn player_movement(
     mut commands: Commands,

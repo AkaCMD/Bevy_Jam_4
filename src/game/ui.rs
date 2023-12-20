@@ -111,16 +111,19 @@ fn show_stuffed_ducks_count(
 fn update_stuffed_ducks_count(
     bread_count: Res<BreadCount>,
     total_bread_count: Res<TotalBreadCount>,
-    mut stuffed_ducks_count: Query<&mut Text, With<StuffedDucksCount>>,
+    mut stuffed_ducks_count: Query<(&mut Text, &mut Style), With<StuffedDucksCount>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if bread_count.is_changed() || total_bread_count.is_changed() {
-        for mut text in stuffed_ducks_count.iter_mut() {
-            text.sections[0].value = format!(
-                "{}/{}",
-                total_bread_count.0 - bread_count.0,
-                total_bread_count.0
-            );
-        }
+    let window = window_query.get_single().unwrap();
+    for (mut text, mut style) in stuffed_ducks_count.iter_mut() {
+        text.sections[0].value = format!(
+            "{}/{}",
+            total_bread_count.0 - bread_count.0,
+            total_bread_count.0
+        );
+        // TODO: Find a better way to do UI alighment after resizing the window
+        // window resize event should also change the "RESIZE"
+        style.right = Val::Px(window.width() / 2.0 - 45.0);
     }
 }
 
