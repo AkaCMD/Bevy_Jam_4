@@ -226,15 +226,9 @@ pub struct NextLevelButton;
 #[derive(Component)]
 pub struct DarkModeButton;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct DisplayMode {
     dark_mode: bool,
-}
-
-impl Default for DisplayMode {
-    fn default() -> Self {
-        DisplayMode { dark_mode: false }
-    }
 }
 
 fn won(

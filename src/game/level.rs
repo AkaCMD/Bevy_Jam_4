@@ -31,162 +31,89 @@ impl bevy::app::Plugin for Plugin {
 
 #[derive(Resource)]
 pub struct Levels {
-    pub level1: &'static str,
-    pub level2: &'static str,
-    pub level3: &'static str,
-    pub level4: &'static str,
-    pub level5: &'static str,
-    pub level6: &'static str,
-    pub level7: &'static str,
-    pub level8: &'static str,
-    pub level9: &'static str,
-    pub level10: &'static str,
-    pub level11: &'static str,
-    pub level12: &'static str,
-    pub level13: &'static str,
+    pub levels: Vec<&'static str>,
 }
+
+macro_rules! load_levels {
+    ($($path:expr),*) => { {
+        let levels: Vec<_> = vec![$(include_str!($path)), *];
+        levels
+     } };
+}
+
 // wasm version can't use std library
+// no "," in the last file path
 impl Default for Levels {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
-        let (
-            level1,
-            level2,
-            level3,
-            level4,
-            level5,
-            level6,
-            level7,
-            level8,
-            level9,
-            level10,
-            level11,
-            level12,
-            level13,
-        ) = (
-            include_str!("..\\..\\assets\\levels\\level1.txt"),
-            include_str!("..\\..\\assets\\levels\\level2.txt"),
-            include_str!("..\\..\\assets\\levels\\level3.txt"),
-            include_str!("..\\..\\assets\\levels\\level4.txt"),
-            include_str!("..\\..\\assets\\levels\\level5.txt"),
-            include_str!("..\\..\\assets\\levels\\level6.txt"),
-            include_str!("..\\..\\assets\\levels\\level7.txt"),
-            include_str!("..\\..\\assets\\levels\\level8.txt"),
-            include_str!("..\\..\\assets\\levels\\level9.txt"),
-            include_str!("..\\..\\assets\\levels\\level10.txt"),
-            include_str!("..\\..\\assets\\levels\\level11.txt"),
-            include_str!("..\\..\\assets\\levels\\level12.txt"),
-            include_str!("..\\..\\assets\\levels\\level13.txt"),
+        let levels = load_levels!(
+            "..\\..\\assets\\levels\\level1.txt",
+            "..\\..\\assets\\levels\\level2.txt",
+            "..\\..\\assets\\levels\\level3.txt",
+            "..\\..\\assets\\levels\\level4.txt",
+            "..\\..\\assets\\levels\\level5.txt",
+            "..\\..\\assets\\levels\\level6.txt",
+            "..\\..\\assets\\levels\\level7.txt",
+            "..\\..\\assets\\levels\\level8.txt",
+            "..\\..\\assets\\levels\\level9.txt",
+            "..\\..\\assets\\levels\\level10.txt",
+            "..\\..\\assets\\levels\\level11.txt",
+            "..\\..\\assets\\levels\\level12.txt",
+            "..\\..\\assets\\levels\\level13.txt"
         );
 
         #[cfg(target_os = "linux")]
-        let (
-            level1,
-            level2,
-            level3,
-            level4,
-            level5,
-            level6,
-            level7,
-            level8,
-            level9,
-            level10,
-            level11,
-            level12,
-            level13,
-        ) = (
-            include_str!("../../assets/levels/level1.txt"),
-            include_str!("../../assets/levels/level2.txt"),
-            include_str!("../../assets/levels/level3.txt"),
-            include_str!("../../assets/levels/level4.txt"),
-            include_str!("../../assets/levels/level5.txt"),
-            include_str!("../../assets/levels/level6.txt"),
-            include_str!("../../assets/levels/level7.txt"),
-            include_str!("../../assets/levels/level8.txt"),
-            include_str!("../../assets/levels/level9.txt"),
-            include_str!("../../assets/levels/level10.txt"),
-            include_str!("../../assets/levels/level11.txt"),
-            include_str!("../../assets/levels/level12.txt"),
-            include_str!("../../assets/levels/level13.txt"),
+        let levels = load_levels!(
+            "../../assets/levels/level1.txt",
+            "../../assets/levels/level2.txt",
+            "../../assets/levels/level3.txt",
+            "../../assets/levels/level4.txt",
+            "../../assets/levels/level5.txt",
+            "../../assets/levels/level6.txt",
+            "../../assets/levels/level7.txt",
+            "../../assets/levels/level8.txt",
+            "../../assets/levels/level9.txt",
+            "../../assets/levels/level10.txt",
+            "../../assets/levels/level11.txt",
+            "../../assets/levels/level12.txt",
+            "../../assets/levels/level13.txt"
         );
 
         #[cfg(target_os = "macos")]
-        let (
-            level1,
-            level2,
-            level3,
-            level4,
-            level5,
-            level6,
-            level7,
-            level8,
-            level9,
-            level10,
-            level11,
-            level12,
-            level13,
-        ) = (
-            include_str!("../../assets/levels/level1.txt"),
-            include_str!("../../assets/levels/level2.txt"),
-            include_str!("../../assets/levels/level3.txt"),
-            include_str!("../../assets/levels/level4.txt"),
-            include_str!("../../assets/levels/level5.txt"),
-            include_str!("../../assets/levels/level6.txt"),
-            include_str!("../../assets/levels/level7.txt"),
-            include_str!("../../assets/levels/level8.txt"),
-            include_str!("../../assets/levels/level9.txt"),
-            include_str!("../../assets/levels/level10.txt"),
-            include_str!("../../assets/levels/level11.txt"),
-            include_str!("../../assets/levels/level12.txt"),
-            include_str!("../../assets/levels/level13.txt"),
+        let levels = load_levels!(
+            "../../assets/levels/level1.txt",
+            "../../assets/levels/level2.txt",
+            "../../assets/levels/level3.txt",
+            "../../assets/levels/level4.txt",
+            "../../assets/levels/level5.txt",
+            "../../assets/levels/level6.txt",
+            "../../assets/levels/level7.txt",
+            "../../assets/levels/level8.txt",
+            "../../assets/levels/level9.txt",
+            "../../assets/levels/level10.txt",
+            "../../assets/levels/level11.txt",
+            "../../assets/levels/level12.txt",
+            "../../assets/levels/level13.txt"
         );
 
         #[cfg(target_arch = "wasm32")]
-        let (
-            level1,
-            level2,
-            level3,
-            level4,
-            level5,
-            level6,
-            level7,
-            level8,
-            level9,
-            level10,
-            level11,
-            level12,
-            level13,
-        ) = (
-            include_str!("../../assets/levels/level1.txt"),
-            include_str!("../../assets/levels/level2.txt"),
-            include_str!("../../assets/levels/level3.txt"),
-            include_str!("../../assets/levels/level4.txt"),
-            include_str!("../../assets/levels/level5.txt"),
-            include_str!("../../assets/levels/level6.txt"),
-            include_str!("../../assets/levels/level7.txt"),
-            include_str!("../../assets/levels/level8.txt"),
-            include_str!("../../assets/levels/level9.txt"),
-            include_str!("../../assets/levels/level10.txt"),
-            include_str!("../../assets/levels/level11.txt"),
-            include_str!("../../assets/levels/level12.txt"),
-            include_str!("../../assets/levels/level13.txt"),
+        let levels = load_levels!(
+            "../../assets/levels/level1.txt",
+            "../../assets/levels/level2.txt",
+            "../../assets/levels/level3.txt",
+            "../../assets/levels/level4.txt",
+            "../../assets/levels/level5.txt",
+            "../../assets/levels/level6.txt",
+            "../../assets/levels/level7.txt",
+            "../../assets/levels/level8.txt",
+            "../../assets/levels/level9.txt",
+            "../../assets/levels/level10.txt",
+            "../../assets/levels/level11.txt",
+            "../../assets/levels/level12.txt",
+            "../../assets/levels/level13.txt"
         );
 
-        Levels {
-            level1,
-            level2,
-            level3,
-            level4,
-            level5,
-            level6,
-            level7,
-            level8,
-            level9,
-            level10,
-            level11,
-            level12,
-            level13,
-        }
+        Self { levels }
     }
 }
 
@@ -196,31 +123,18 @@ pub enum GameError {
     FailToLoadLevels,
 }
 
-pub fn load_level(level_index: i32, levels: Res<Levels>) -> anyhow::Result<Level> {
-    let level_content = match level_index {
-        1 => levels.level1,
-        2 => levels.level2,
-        3 => levels.level3,
-        4 => levels.level4,
-        5 => levels.level5,
-        6 => levels.level6,
-        7 => levels.level7,
-        8 => levels.level8,
-        9 => levels.level9,
-        10 => levels.level10,
-        11 => levels.level11,
-        12 => levels.level12,
-        13 => levels.level13,
-        _ => return Err(GameError::FailToLoadLevels.into()),
-    };
-
-    let level_data: Vec<Vec<char>> = level_content
-        .to_string()
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect();
-
-    Ok(Level(level_data))
+pub fn load_level(level_index: usize, levels: Res<Levels>) -> anyhow::Result<Level> {
+    levels
+        .levels
+        .get(level_index - 1)
+        .map(|&level_content| {
+            let level_data: Vec<Vec<char>> = level_content
+                .lines()
+                .map(|line| line.chars().collect())
+                .collect();
+            Level(level_data)
+        })
+        .ok_or_else(|| GameError::FailToLoadLevels.into())
 }
 
 // Define a generic Stack struct
@@ -280,7 +194,7 @@ impl Default for LevelStack {
 pub struct Level(pub Vec<Vec<char>>);
 
 #[derive(Resource)]
-pub struct CurrentLevelIndex(pub i32);
+pub struct CurrentLevelIndex(pub usize);
 
 impl Default for CurrentLevelIndex {
     fn default() -> Self {
@@ -430,7 +344,7 @@ fn spawn_duck(
     position: Vec3,
     sprite: Handle<Image>,
     logic_position: (usize, usize),
-    level_index: i32,
+    level_index: usize,
     asset_server: &Res<AssetServer>,
     is_stuffed: bool,
     can_move: bool,
@@ -466,7 +380,7 @@ fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
     asset_server: &Res<AssetServer>,
-    level_index: i32,
+    level_index: usize,
     bread_count: &mut ResMut<BreadCount>,
     // event
     events: &mut EventWriter<Won>,
