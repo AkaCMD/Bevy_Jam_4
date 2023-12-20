@@ -36,11 +36,11 @@ pub struct Levels {
 
 macro_rules! load_levels {
     ($($path:expr),*) => { {
-        let levels: Vec<_> = vec![$(include_str!($path)), *];
-        levels
+        vec![$(include_str!($path)), *]
      } };
 }
 
+// IMPORTANT: Remember to add corresponding level file path
 // wasm version can't use std library
 // no "," in the last file path
 impl Default for Levels {
@@ -62,41 +62,7 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level13.txt"
         );
 
-        #[cfg(target_os = "linux")]
-        let levels = load_levels!(
-            "../../assets/levels/level1.txt",
-            "../../assets/levels/level2.txt",
-            "../../assets/levels/level3.txt",
-            "../../assets/levels/level4.txt",
-            "../../assets/levels/level5.txt",
-            "../../assets/levels/level6.txt",
-            "../../assets/levels/level7.txt",
-            "../../assets/levels/level8.txt",
-            "../../assets/levels/level9.txt",
-            "../../assets/levels/level10.txt",
-            "../../assets/levels/level11.txt",
-            "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt"
-        );
-
-        #[cfg(target_os = "macos")]
-        let levels = load_levels!(
-            "../../assets/levels/level1.txt",
-            "../../assets/levels/level2.txt",
-            "../../assets/levels/level3.txt",
-            "../../assets/levels/level4.txt",
-            "../../assets/levels/level5.txt",
-            "../../assets/levels/level6.txt",
-            "../../assets/levels/level7.txt",
-            "../../assets/levels/level8.txt",
-            "../../assets/levels/level9.txt",
-            "../../assets/levels/level10.txt",
-            "../../assets/levels/level11.txt",
-            "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt"
-        );
-
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
         let levels = load_levels!(
             "../../assets/levels/level1.txt",
             "../../assets/levels/level2.txt",
@@ -135,50 +101,6 @@ pub fn load_level(level_index: usize, levels: Res<Levels>) -> anyhow::Result<Lev
             Level(level_data)
         })
         .ok_or_else(|| GameError::FailToLoadLevels.into())
-}
-
-// Define a generic Stack struct
-pub struct Stack<T> {
-    items: Vec<T>,
-}
-
-impl<T> Stack<T> {
-    // Create a new empty stack
-    pub fn new() -> Stack<T> {
-        Stack { items: Vec::new() }
-    }
-
-    // Check if the stack is empty
-    pub fn is_empty(&self) -> bool {
-        self.items.is_empty()
-    }
-
-    // Get the size of the stack
-    pub fn size(&self) -> usize {
-        self.items.len()
-    }
-
-    // Push an item onto the stack
-    pub fn push(&mut self, item: T) {
-        self.items.push(item);
-    }
-
-    // Pop an item from the stack
-    pub fn pop(&mut self) -> Option<T> {
-        self.items.pop()
-    }
-
-    // Peek at the top item of the stack without removing it
-    pub fn peek(&self) -> Option<&T> {
-        self.items.last()
-    }
-
-    // Clear the stack
-    pub fn clear(&mut self) {
-        while !self.is_empty() {
-            self.pop();
-        }
-    }
 }
 
 #[derive(Resource)]
@@ -590,7 +512,7 @@ fn change_level_cheats(
     mut level_index: ResMut<CurrentLevelIndex>,
 ) {
     let origin_index = level_index.0;
-    if input.just_pressed(KeyCode::BracketLeft) {
+    if input.just_pressed(KeyCode::BracketLeft) && level_index.0 > 1 {
         level_index.0 -= 1;
     }
     if input.just_pressed(KeyCode::BracketRight) {
