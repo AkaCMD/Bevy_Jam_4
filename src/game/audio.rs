@@ -20,10 +20,10 @@ impl bevy::app::Plugin for Plugin {
 
 fn play_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(AudioBundle {
-        source: asset_server.load("audio/Doc.ogg"),
+        source: asset_server.load("audio/bgm.ogg"),
         settings: PlaybackSettings {
             mode: PlaybackMode::Loop,
-            volume: Volume::new_absolute(0.3),
+            volume: Volume::new_absolute(0.08),
             ..default()
         },
     });

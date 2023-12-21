@@ -1,8 +1,9 @@
 use bevy::window::PrimaryWindow;
 
 use super::{
+    cursor::click_detection,
     level::{BreadCount, CurrentLevelIndex, TotalBreadCount},
-    *, cursor::click_detection,
+    *,
 };
 pub struct Plugin;
 
@@ -26,8 +27,8 @@ impl bevy::app::Plugin for Plugin {
                 update_level_title,
                 // next_level_button_interaction should execute after click_detection
                 // It fixes the bug when click the next level button and a duck simsimultaneously
-                // If not doing so, click_detection will try to insert Player bundle to an invalid entity, causes the game to crash 
-                next_level_button_interaction.after(click_detection), 
+                // If not doing so, click_detection will try to insert Player bundle to an invalid entity, causes the game to crash
+                next_level_button_interaction.after(click_detection),
                 dark_mode_button_interaction,
                 update_stuffed_ducks_count,
             ),
