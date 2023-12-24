@@ -101,7 +101,7 @@ fn player_movement(
             duck.logic_position = end_position;
             // Update the translation of ducks
             let v3 = logic_position_to_translation(end_position);
-            let tween = Tween::new(
+            let tween_translation = Tween::new(
                 EaseFunction::QuadraticInOut,
                 Duration::from_millis(300),
                 TransformPositionLens {
@@ -111,7 +111,22 @@ fn player_movement(
             )
             .with_repeat_count(1);
 
-            commands.entity(entity).insert(Animator::new(tween));
+            // Scale the duck while moving
+            let origin_scale = transform.scale;
+            let new_scale = transform.scale * Vec3::new(1.3, 0.7, 1.);
+            let tween_scale = Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_millis(300),
+                TransformScaleLens {
+                    start: new_scale,
+                    end: origin_scale,
+                },
+            )
+            .with_repeat_count(1);
+
+            let track: Tracks<Transform> = Tracks::new(vec![tween_translation, tween_scale]);
+
+            commands.entity(entity).insert(Animator::new(track));
             //let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
             //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
 
