@@ -135,7 +135,7 @@ impl Default for BreadCount {
     }
 }
 // TODO: Layers of objects (z axis)
-enum ObjectType {
+pub enum ObjectType {
     Wall,
     Ice,
     DuckOnIce,
@@ -144,6 +144,22 @@ enum ObjectType {
     BreakingIce,
     DuckOnWater,
     DuckOnBreakingIce,
+}
+
+// Symbols
+impl ObjectType {
+    pub fn get_symbol(self) -> char {
+        match self {
+            ObjectType::Wall => '@',
+            ObjectType::Ice => '#',
+            ObjectType::DuckOnIce => 'D',
+            ObjectType::StuffedDuckOnIce => 'Q',
+            ObjectType::BreadOnIce => 'B',
+            ObjectType::BreakingIce => '*',
+            ObjectType::DuckOnWater => 'P',
+            ObjectType::DuckOnBreakingIce => 'O',
+        }
+    }
 }
 
 #[derive(Component)]

@@ -1,4 +1,8 @@
-use super::{audio::PlaySFX, level::UpdateLevel, *};
+use super::{
+    audio::PlaySFX,
+    level::{ObjectType::*, UpdateLevel},
+    *,
+};
 use bevy::utils::Duration;
 
 pub struct Plugin;
@@ -123,8 +127,6 @@ fn player_movement(
 }
 
 // Slip until hitting the wall or bread
-// Wall: @
-// Bread: B
 fn slip(
     duck: &mut Duck, // logic position: (col, row)
     direction: utils::Direction,
@@ -141,108 +143,82 @@ fn slip(
     let mut position = logic_position;
     match direction {
         utils::Direction::Up => {
-            while position.1 > 0
-                && level.0[position.1 - 1][position.0] != '@'
-                && level.0[position.1 - 1][position.0] != 'D'
-                && level.0[position.1 - 1][position.0] != 'P'
-                && level.0[position.1 - 1][position.0] != 'O'
-                && level.0[position.1 - 1][position.0] != 'Q'
-                && (!duck.is_stuffed || level.0[position.1 - 1][position.0] != 'B')
-            {
+            while position.1 > 0 && is_valid_move(level.0[position.1 - 1][position.0], duck) {
                 position.1 -= 1;
-                let check_pos = level.0[position.1][position.0];
-                if check_pos == 'B' {
-                    duck.is_stuffed = true;
-                    break;
-                }
-                if check_pos == '*' && duck.is_stuffed {
-                    duck.can_move = false;
+                if collide_with_object(level.0[position.1][position.0], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Down => {
-            while position.1 < rows - 1
-                && level.0[position.1 + 1][position.0] != '@'
-                && level.0[position.1 + 1][position.0] != 'D'
-                && level.0[position.1 + 1][position.0] != 'P'
-                && level.0[position.1 + 1][position.0] != 'O'
-                && level.0[position.1 + 1][position.0] != 'Q'
-                && (!duck.is_stuffed || level.0[position.1 + 1][position.0] != 'B')
+            while position.1 < rows - 1 && is_valid_move(level.0[position.1 + 1][position.0], duck)
             {
                 position.1 += 1;
-                let check_pos = level.0[position.1][position.0];
-                if check_pos == 'B' {
-                    duck.is_stuffed = true;
-                    break;
-                }
-                if check_pos == '*' && duck.is_stuffed {
-                    duck.can_move = false;
+                if collide_with_object(level.0[position.1][position.0], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Left => {
-            while position.0 > 0
-                && level.0[position.1][position.0 - 1] != '@'
-                && level.0[position.1][position.0 - 1] != 'D'
-                && level.0[position.1][position.0 - 1] != 'P'
-                && level.0[position.1][position.0 - 1] != 'O'
-                && level.0[position.1][position.0 - 1] != 'Q'
-                && (!duck.is_stuffed || level.0[position.1][position.0 - 1] != 'B')
-            {
+            while position.0 > 0 && is_valid_move(level.0[position.1][position.0 - 1], duck) {
                 position.0 -= 1;
-                let check_pos = level.0[position.1][position.0];
-                if check_pos == 'B' {
-                    duck.is_stuffed = true;
-                    break;
-                }
-                if check_pos == '*' && duck.is_stuffed {
-                    duck.can_move = false;
+                if collide_with_object(level.0[position.1][position.0], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Right => {
-            while position.0 < cols - 1
-                && level.0[position.1][position.0 + 1] != '@'
-                && level.0[position.1][position.0 + 1] != 'D'
-                && level.0[position.1][position.0 + 1] != 'P'
-                && level.0[position.1][position.0 + 1] != 'O'
-                && level.0[position.1][position.0 + 1] != 'Q'
-                && (!duck.is_stuffed || level.0[position.1][position.0 + 1] != 'B')
+            while position.0 < cols - 1 && is_valid_move(level.0[position.1][position.0 + 1], duck)
             {
                 position.0 += 1;
-                let check_pos = level.0[position.1][position.0];
-                if check_pos == 'B' {
-                    duck.is_stuffed = true;
-                    break;
-                }
-                if check_pos == '*' && duck.is_stuffed {
-                    duck.can_move = false;
+                if collide_with_object(level.0[position.1][position.0], duck) {
                     break;
                 }
             }
         }
         _ => (),
     }
-    let mut duck_char: char = 'D';
+
+    // Update symbols on the level
+    let mut duck_char: char = DuckOnIce.get_symbol();
     if duck.is_stuffed {
-        duck_char = 'Q';
+        duck_char = StuffedDuckOnIce.get_symbol();
     }
 
-    if level.0[logic_position.1][logic_position.0] == 'O' {
-        level.0[logic_position.1][logic_position.0] = '*';
+    if level.0[logic_position.1][logic_position.0] == DuckOnBreakingIce.get_symbol() {
+        level.0[logic_position.1][logic_position.0] = BreakingIce.get_symbol();
     } else {
-        level.0[logic_position.1][logic_position.0] = '#';
+        level.0[logic_position.1][logic_position.0] = Ice.get_symbol();
     }
-    if level.0[position.1][position.0] == '*' {
-        level.0[position.1][position.0] = 'O';
+    if level.0[position.1][position.0] == BreakingIce.get_symbol() {
+        level.0[position.1][position.0] = DuckOnBreakingIce.get_symbol();
     } else {
         level.0[position.1][position.0] = duck_char;
     }
     if !duck.can_move {
-        level.0[position.1][position.0] = 'P';
+        level.0[position.1][position.0] = DuckOnWater.get_symbol();
     }
     position
+}
+
+fn is_valid_move(symbol: char, duck: &Duck) -> bool {
+    symbol != Wall.get_symbol()
+        && symbol != DuckOnIce.get_symbol()
+        && symbol != DuckOnWater.get_symbol()
+        && symbol != DuckOnBreakingIce.get_symbol()
+        && symbol != StuffedDuckOnIce.get_symbol()
+        && (!duck.is_stuffed || symbol != BreadOnIce.get_symbol())
+}
+
+fn collide_with_object(symbol: char, duck: &mut Duck) -> bool {
+    let mut should_stop = false;
+    if symbol == BreadOnIce.get_symbol() {
+        duck.is_stuffed = true;
+        should_stop = true;
+    }
+    if symbol == BreakingIce.get_symbol() && duck.is_stuffed {
+        duck.can_move = false;
+        should_stop = true;
+    }
+    should_stop
 }

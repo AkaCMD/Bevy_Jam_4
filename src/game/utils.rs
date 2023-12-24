@@ -11,13 +11,13 @@ pub enum Direction {
 }
 
 // impl Direction {
-//     pub fn to_vector(self) -> Vec3 {
+//     pub fn to_vector(self) -> Vec2 {
 //         match self {
-//             Direction::Up => Vec3::new(0.0, 1.0, 0.0),
-//             Direction::Down => Vec3::new(0.0, -1.0, 0.0),
-//             Direction::Left => Vec3::new(-1.0, 0.0, 0.0),
-//             Direction::Right => Vec3::new(1.0, 0.0, 0.0),
-//             Direction::None => Vec3::new(0.0, 0.0, 0.0),
+//             Direction::Up => Vec2::new(0.0, 1.0),
+//             Direction::Down => Vec2::new(0.0, -1.0),
+//             Direction::Left => Vec2::new(-1.0, 0.0),
+//             Direction::Right => Vec2::new(1.0, 0.0),
+//             Direction::None => Vec2::new(0.0, 0.0),
 //         }
 //     }
 // }
@@ -37,37 +37,30 @@ pub struct Stack<T> {
 }
 
 impl<T> Stack<T> {
-    // Create a new empty stack
     pub fn new() -> Stack<T> {
         Stack { items: Vec::new() }
     }
 
-    // Check if the stack is empty
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
 
-    // Get the size of the stack
     pub fn size(&self) -> usize {
         self.items.len()
     }
 
-    // Push an item onto the stack
     pub fn push(&mut self, item: T) {
         self.items.push(item);
     }
 
-    // Pop an item from the stack
     pub fn pop(&mut self) -> Option<T> {
         self.items.pop()
     }
 
-    // Peek at the top item of the stack without removing it
     pub fn peek(&self) -> Option<&T> {
         self.items.last()
     }
 
-    // Clear the stack
     pub fn clear(&mut self) {
         while !self.is_empty() {
             self.pop();
