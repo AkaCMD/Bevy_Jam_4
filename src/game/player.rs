@@ -41,6 +41,7 @@ fn player_movement(
         ),
         With<Player>,
     >,
+    ducks_query: Query<(Entity, &Duck), (With<Duck>, Without<Player>)>,
     // event
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -103,7 +104,7 @@ fn player_movement(
             let v3 = logic_position_to_translation(end_position);
             let tween_translation = Tween::new(
                 EaseFunction::QuadraticInOut,
-                Duration::from_millis(300),
+                Duration::from_millis(DUCK_MOVE_MILI_SECS),
                 TransformPositionLens {
                     start: transform.translation,
                     end: Vec3::new(v3.x, v3.y, 1.0),
@@ -112,11 +113,11 @@ fn player_movement(
             .with_repeat_count(1);
 
             // Scale the duck while moving
-            let origin_scale = transform.scale;
+            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
             let new_scale = transform.scale * Vec3::new(1.3, 0.7, 1.);
             let tween_scale = Tween::new(
                 EaseFunction::QuadraticInOut,
-                Duration::from_millis(300),
+                Duration::from_millis(DUCK_MOVE_MILI_SECS),
                 TransformScaleLens {
                     start: new_scale,
                     end: origin_scale,
@@ -127,6 +128,7 @@ fn player_movement(
             let track: Tracks<Transform> = Tracks::new(vec![tween_translation, tween_scale]);
 
             commands.entity(entity).insert(Animator::new(track));
+            shake_other_ducks_in_direction(commands, direction, duck.logic_position, ducks_query);
             //let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
             //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
 
@@ -236,4 +238,71 @@ fn collide_with_object(symbol: char, duck: &mut Duck) -> bool {
         should_stop = true;
     }
     should_stop
+}
+
+// TODO: add obstacle detection
+fn shake_other_ducks_in_direction(
+    mut commands: Commands,
+    direction: utils::Direction,
+    player_logic_position: (usize, usize),
+    ducks_query: Query<(Entity, &Duck), (With<Duck>, Without<Player>)>,
+) {
+    let mut ducks_to_shake: Vec<Entity> = Vec::new();
+    match direction {
+        utils::Direction::Up => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.0 == player_logic_position.0
+                    && duck.logic_position.1 < player_logic_position.1
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::Down => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.0 == player_logic_position.0
+                    && duck.logic_position.1 > player_logic_position.1
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::Left => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.1 == player_logic_position.1
+                    && duck.logic_position.0 < player_logic_position.0
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::Right => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.1 == player_logic_position.1
+                    && duck.logic_position.0 > player_logic_position.0
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::None => (),
+    }
+
+    for entity in ducks_to_shake {
+        let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
+        let new_scale = origin_scale * Vec3::new(1.3, 0.7, 1.);
+        let tween_scale = Tween::new(
+            EaseFunction::QuadraticInOut,
+            Duration::from_millis(300),
+            TransformScaleLens {
+                start: new_scale,
+                end: origin_scale,
+            },
+        )
+        .with_repeat_count(1);
+        let delay = Delay::new(Duration::from_millis(DUCK_MOVE_MILI_SECS));
+        commands
+            .entity(entity)
+            .insert(Animator::new(delay.then(tween_scale)));
+    }
 }
