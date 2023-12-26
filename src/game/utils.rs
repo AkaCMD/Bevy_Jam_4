@@ -25,8 +25,8 @@ pub enum Direction {
 // Convert logic position in level to translation
 pub fn logic_position_to_translation(logic_position: (usize, usize)) -> Vec3 {
     Vec3::new(
-        logic_position.0 as f32 * SPRITE_SIZE + 720.0 / 4.0,
-        logic_position.1 as f32 * (-SPRITE_SIZE) + 720.0 * (3.0 / 4.0),
+        logic_position.1 as f32 * SPRITE_SIZE + 720.0 / 4.0,
+        logic_position.0 as f32 * (-SPRITE_SIZE) + 720.0 * (3.0 / 4.0),
         0.0,
     )
 }

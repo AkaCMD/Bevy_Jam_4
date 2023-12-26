@@ -165,6 +165,13 @@ impl ObjectType {
 #[derive(Component)]
 pub struct Object;
 
+// TODO: Multiple grids rigidbody(or object?)
+// pub trait Rigidbody {
+//     fn get_occupied_positions(&self) -> Vec<(usize, usize)>;
+//     fn get_force_direction(&self) -> utils::Direction;
+//     fn get_force_source(&self) -> &Entity;
+// }
+
 #[derive(Event, Default)]
 pub struct PrintLevel;
 
@@ -329,7 +336,7 @@ fn spawn_sprites(
     // spawn the sprites
     for (row_index, row) in level.iter().enumerate() {
         for (col_index, &ch) in row.iter().enumerate() {
-            let position = logic_position_to_translation((col_index, row_index));
+            let position = logic_position_to_translation((row_index, col_index));
             let object_type = match ch {
                 '@' => ObjectType::Wall,
                 '#' => ObjectType::Ice,
@@ -356,7 +363,7 @@ fn spawn_sprites(
                             commands,
                             position,
                             asset_server.load("sprites/duck.png"),
-                            (col_index, row_index),
+                            (row_index, col_index),
                             level_index,
                             asset_server,
                             false,
@@ -371,7 +378,7 @@ fn spawn_sprites(
                             commands,
                             position,
                             asset_server.load("sprites/stuffed_duck.png"),
-                            (col_index, row_index),
+                            (row_index, col_index),
                             level_index,
                             asset_server,
                             true,
@@ -398,7 +405,7 @@ fn spawn_sprites(
                             commands,
                             position,
                             asset_server.load("sprites/stuffed_duck.png"),
-                            (col_index, row_index),
+                            (row_index, col_index),
                             level_index,
                             asset_server,
                             true,
@@ -417,7 +424,7 @@ fn spawn_sprites(
                             commands,
                             position,
                             asset_server.load("sprites/duck.png"),
-                            (col_index, row_index),
+                            (row_index, col_index),
                             level_index,
                             asset_server,
                             false,

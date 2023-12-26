@@ -13,7 +13,7 @@ impl bevy::app::Plugin for Plugin {
             .add_systems(Update, component_animator_system::<Transform>);
     }
 }
-
+// TODO: gluttonous duck
 #[derive(Component)]
 pub struct Duck {
     pub logic_position: (usize, usize),
@@ -145,7 +145,7 @@ fn player_movement(
 
 // Slip until hitting the wall or bread
 fn slip(
-    duck: &mut Duck, // logic position: (col, row)
+    duck: &mut Duck, // logic position: (row, col)
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
@@ -156,39 +156,39 @@ fn slip(
     // Right: col++
     let rows = level.0.len();
     let logic_position = duck.logic_position;
-    let cols = level.0[logic_position.1].len();
+    let cols = level.0[logic_position.0].len();
     let mut position = logic_position;
     match direction {
         utils::Direction::Up => {
-            while position.1 > 0 && is_valid_move(level.0[position.1 - 1][position.0], duck) {
-                position.1 -= 1;
-                if collide_with_object(level.0[position.1][position.0], duck) {
+            while position.0 > 0 && is_valid_move(level.0[position.0 - 1][position.1], duck) {
+                position.0 -= 1;
+                if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Down => {
-            while position.1 < rows - 1 && is_valid_move(level.0[position.1 + 1][position.0], duck)
+            while position.0 < rows - 1 && is_valid_move(level.0[position.0 + 1][position.1], duck)
             {
-                position.1 += 1;
-                if collide_with_object(level.0[position.1][position.0], duck) {
+                position.0 += 1;
+                if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Left => {
-            while position.0 > 0 && is_valid_move(level.0[position.1][position.0 - 1], duck) {
-                position.0 -= 1;
-                if collide_with_object(level.0[position.1][position.0], duck) {
+            while position.1 > 0 && is_valid_move(level.0[position.0][position.1 - 1], duck) {
+                position.1 -= 1;
+                if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
                 }
             }
         }
         utils::Direction::Right => {
-            while position.0 < cols - 1 && is_valid_move(level.0[position.1][position.0 + 1], duck)
+            while position.1 < cols - 1 && is_valid_move(level.0[position.0][position.1 + 1], duck)
             {
-                position.0 += 1;
-                if collide_with_object(level.0[position.1][position.0], duck) {
+                position.1 += 1;
+                if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
                 }
             }
@@ -202,18 +202,18 @@ fn slip(
         duck_char = StuffedDuckOnIce.get_symbol();
     }
 
-    if level.0[logic_position.1][logic_position.0] == DuckOnBreakingIce.get_symbol() {
-        level.0[logic_position.1][logic_position.0] = BreakingIce.get_symbol();
+    if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
+        level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
     } else {
-        level.0[logic_position.1][logic_position.0] = Ice.get_symbol();
+        level.0[logic_position.0][logic_position.1] = Ice.get_symbol();
     }
-    if level.0[position.1][position.0] == BreakingIce.get_symbol() {
-        level.0[position.1][position.0] = DuckOnBreakingIce.get_symbol();
+    if level.0[position.0][position.1] == BreakingIce.get_symbol() {
+        level.0[position.0][position.1] = DuckOnBreakingIce.get_symbol();
     } else {
-        level.0[position.1][position.0] = duck_char;
+        level.0[position.0][position.1] = duck_char;
     }
     if !duck.can_move {
-        level.0[position.1][position.0] = DuckOnWater.get_symbol();
+        level.0[position.0][position.1] = DuckOnWater.get_symbol();
     }
     position
 }
@@ -251,24 +251,6 @@ fn shake_other_ducks_in_direction(
     match direction {
         utils::Direction::Up => {
             for (entity, duck) in ducks_query.into_iter() {
-                if duck.logic_position.0 == player_logic_position.0
-                    && duck.logic_position.1 < player_logic_position.1
-                {
-                    ducks_to_shake.push(entity);
-                }
-            }
-        }
-        utils::Direction::Down => {
-            for (entity, duck) in ducks_query.into_iter() {
-                if duck.logic_position.0 == player_logic_position.0
-                    && duck.logic_position.1 > player_logic_position.1
-                {
-                    ducks_to_shake.push(entity);
-                }
-            }
-        }
-        utils::Direction::Left => {
-            for (entity, duck) in ducks_query.into_iter() {
                 if duck.logic_position.1 == player_logic_position.1
                     && duck.logic_position.0 < player_logic_position.0
                 {
@@ -276,10 +258,28 @@ fn shake_other_ducks_in_direction(
                 }
             }
         }
-        utils::Direction::Right => {
+        utils::Direction::Down => {
             for (entity, duck) in ducks_query.into_iter() {
                 if duck.logic_position.1 == player_logic_position.1
                     && duck.logic_position.0 > player_logic_position.0
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::Left => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.0 == player_logic_position.0
+                    && duck.logic_position.1 < player_logic_position.1
+                {
+                    ducks_to_shake.push(entity);
+                }
+            }
+        }
+        utils::Direction::Right => {
+            for (entity, duck) in ducks_query.into_iter() {
+                if duck.logic_position.0 == player_logic_position.0
+                    && duck.logic_position.1 > player_logic_position.1
                 {
                     ducks_to_shake.push(entity);
                 }
