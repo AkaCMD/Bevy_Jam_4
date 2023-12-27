@@ -1,4 +1,9 @@
-use super::{cursor::ArrowHint, player::Duck, ui::Won, *};
+use super::{
+    cursor::ArrowHint,
+    player::{Duck, GluttonousDuck},
+    ui::Won,
+    *,
+};
 use bevy::utils::thiserror;
 use thiserror::Error;
 // TODO: code refactor
@@ -59,7 +64,8 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level10.txt",
             "..\\..\\assets\\levels\\level11.txt",
             "..\\..\\assets\\levels\\level12.txt",
-            "..\\..\\assets\\levels\\level13.txt"
+            "..\\..\\assets\\levels\\level13.txt",
+            "..\\..\\assets\\levels\\level14.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -76,7 +82,8 @@ impl Default for Levels {
             "../../assets/levels/level10.txt",
             "../../assets/levels/level11.txt",
             "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt"
+            "../../assets/levels/level13.txt",
+            "../../assets/levels/level14.txt"
         );
 
         Self { levels }
@@ -144,6 +151,7 @@ pub enum ObjectType {
     BreakingIce,
     DuckOnWater,
     DuckOnBreakingIce,
+    GluttonousDuck,
 }
 
 // Symbols
@@ -158,6 +166,7 @@ impl ObjectType {
             ObjectType::BreakingIce => '*',
             ObjectType::DuckOnWater => 'P',
             ObjectType::DuckOnBreakingIce => 'O',
+            ObjectType::GluttonousDuck => 'G',
         }
     }
 }
@@ -167,9 +176,10 @@ pub struct Object;
 
 // TODO: Multiple grids rigidbody(or object?)
 // pub trait Rigidbody {
-//     fn get_occupied_positions(&self) -> Vec<(usize, usize)>;
-//     fn get_force_direction(&self) -> utils::Direction;
-//     fn get_force_source(&self) -> &Entity;
+//     // fn get_occupied_positions(&self) -> Vec<(usize, usize)>;
+//     // fn get_force_direction(&self) -> utils::Direction;
+//     // fn get_force_source(&self) -> &Entity;
+
 // }
 
 #[derive(Event, Default)]
@@ -227,7 +237,15 @@ fn update_level(
     mut events_update: EventReader<UpdateLevel>,
     mut events: EventWriter<Won>,
     // add the objects that won't be despawn to the filter
-    object_query: Query<Entity, (With<Object>, Without<Duck>, Without<ArrowHint>)>,
+    object_query: Query<
+        Entity,
+        (
+            With<Object>,
+            Without<Duck>,
+            Without<ArrowHint>,
+            Without<GluttonousDuck>,
+        ),
+    >,
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
@@ -321,6 +339,38 @@ fn spawn_duck(
     }
 }
 
+fn spawn_g_duck(
+    commands: &mut Commands,
+    position: Vec3,
+    sprite: Handle<Image>,
+    logic_position: (usize, usize),
+    can_move: bool,
+) {
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(position.x, position.y, 1.0),
+                rotation: Quat::IDENTITY,
+                scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
+            },
+            texture: sprite,
+            ..default()
+        },
+        GluttonousDuck {
+            logic_position,
+            occupied_positions: vec![
+                logic_position,
+                (logic_position.0 + 1, logic_position.1),
+                (logic_position.0, logic_position.1 + 1),
+                (logic_position.0 + 1, logic_position.1 + 1),
+            ],
+            has_eaten_bread: 4,
+            can_move,
+        },
+        Object,
+    ));
+}
+
 fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
@@ -346,6 +396,7 @@ fn spawn_sprites(
                 'P' => ObjectType::DuckOnWater,
                 'O' => ObjectType::DuckOnBreakingIce,
                 'Q' => ObjectType::StuffedDuckOnIce,
+                'G' => ObjectType::GluttonousDuck,
                 _ => continue,
             };
 
@@ -428,6 +479,23 @@ fn spawn_sprites(
                             level_index,
                             asset_server,
                             false,
+                            true,
+                        );
+                    }
+                }
+                ObjectType::GluttonousDuck => {
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    if should_respawn_duck {
+                        spawn_g_duck(
+                            commands,
+                            position
+                                + Vec3 {
+                                    x: SPRITE_SIZE / 2.,
+                                    y: -SPRITE_SIZE / 2.,
+                                    z: 0.,
+                                },
+                            asset_server.load("sprites/stuffed_duck.png"),
+                            (row_index, col_index),
                             true,
                         );
                     }

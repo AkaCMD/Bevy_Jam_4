@@ -21,6 +21,14 @@ pub struct Duck {
     pub can_move: bool,   // stuffed_duck on breaking_ice => can't move
 }
 
+#[derive(Component)]
+pub struct GluttonousDuck {
+    pub logic_position: (usize, usize),
+    pub occupied_positions: Vec<(usize, usize)>,
+    pub has_eaten_bread: u32,
+    pub can_move: bool,
+}
+
 // the chosen duck
 #[derive(Component)]
 pub struct Player;
@@ -304,5 +312,39 @@ fn shake_other_ducks_in_direction(
         commands
             .entity(entity)
             .insert(Animator::new(delay.then(tween_scale)));
+    }
+}
+
+// TODO: finish it
+fn move_together(
+    g_duck: &mut GluttonousDuck,
+    mut level: ResMut<level::Level>,
+    occupied_positions: Vec<(usize, usize)>,
+    direction: utils::Direction,
+) {
+    let edge_position = find_edge_position(&occupied_positions, direction);
+    match direction {
+        utils::Direction::Up => {
+            for pos in occupied_positions.iter() {
+                if pos.0 == edge_position {}
+            }
+        }
+        utils::Direction::Down => todo!(),
+        utils::Direction::Left => todo!(),
+        utils::Direction::Right => todo!(),
+        utils::Direction::None => todo!(),
+    }
+}
+
+fn find_edge_position(
+    occupied_positions: &Vec<(usize, usize)>,
+    direction: utils::Direction,
+) -> usize {
+    match direction {
+        utils::Direction::Up => occupied_positions.iter().min_by_key(|&(a, _)| a).unwrap().0,
+        utils::Direction::Down => occupied_positions.iter().max_by_key(|&(a, _)| a).unwrap().0,
+        utils::Direction::Left => occupied_positions.iter().min_by_key(|&(_, a)| a).unwrap().1,
+        utils::Direction::Right => occupied_positions.iter().max_by_key(|&(_, a)| a).unwrap().1,
+        utils::Direction::None => 0,
     }
 }
