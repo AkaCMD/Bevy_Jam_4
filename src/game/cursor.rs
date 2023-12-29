@@ -128,7 +128,7 @@ pub fn click_detection(
                     //info!("You are the chosen one!");
                     commands
                         .entity(entity)
-                        .insert(Player) // error[B0003]: Could not insert a bundle
+                        .insert(Player)
                         .with_children(|parent| {
                             parent.spawn((
                                 SpriteBundle {
@@ -164,7 +164,7 @@ pub fn click_detection(
                     //info!("You are the chosen one!");
                     commands
                         .entity(entity)
-                        .insert(Player) // error[B0003]: Could not insert a bundle
+                        .insert(Player)
                         .with_children(|parent| {
                             parent.spawn((
                                 SpriteBundle {

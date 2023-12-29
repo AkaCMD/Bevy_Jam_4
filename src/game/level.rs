@@ -652,3 +652,22 @@ fn undo_the_level(
         );
     }
 }
+
+// TODO: specify entity type and layer
+pub fn get_entity_on_logic_position(
+    logic_position: (usize, usize),
+    query: &Query<(Entity, &Transform), With<Object>>,
+) -> Option<Entity> {
+    let entity_translation = logic_position_to_translation(logic_position)
+        + Vec3 {
+            x: 0.,
+            y: 0.,
+            z: 1.,
+        }; // quick fix for duck, remove or change it later
+    for (entity, transform) in query.iter() {
+        if transform.translation == entity_translation {
+            return Some(entity);
+        }
+    }
+    None
+}
