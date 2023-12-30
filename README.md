@@ -24,7 +24,7 @@ Game made for Bevy Jam 4 🦀 in 9 days
 
 Free audio assets (thanks!):
 
-https://freemusicarchive.org/music/Ask%20Again/hurricane-below-ground-abstract-jazz-1/So_Low/
+https://pixabay.com/music/smooth-jazz-gimme-gimme-jazz-179073/
 
 https://freesound.org/people/DrMaysta/sounds/418509/
 

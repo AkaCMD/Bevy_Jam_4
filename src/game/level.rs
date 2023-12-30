@@ -64,8 +64,7 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level10.txt",
             "..\\..\\assets\\levels\\level11.txt",
             "..\\..\\assets\\levels\\level12.txt",
-            "..\\..\\assets\\levels\\level13.txt",
-            "..\\..\\assets\\levels\\level14.txt"
+            "..\\..\\assets\\levels\\level13.txt" // "..\\..\\assets\\levels\\level14.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -82,8 +81,7 @@ impl Default for Levels {
             "../../assets/levels/level10.txt",
             "../../assets/levels/level11.txt",
             "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt",
-            "../../assets/levels/level14.txt"
+            "../../assets/levels/level13.txt" // "../../assets/levels/level14.txt"
         );
 
         Self { levels }

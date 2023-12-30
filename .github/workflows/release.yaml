@@ -238,52 +238,52 @@ jobs:
   #         tag: ${{ github.ref }}
   #         overwrite: true
 
-  # check-if-upload-to-itch-is-configured:
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     should-upload: ${{ steps.check-env.outputs.has-itch-target }}
-  #   steps:
-  #     - id: check-env
-  #       run: |
-  #         if [[ -z "$itch_target" ]]; then
-  #           echo "has-itch-target=no" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "has-itch-target=yes" >> $GITHUB_OUTPUT
-  #         fi
+  check-if-upload-to-itch-is-configured:
+    runs-on: ubuntu-latest
+    outputs:
+      should-upload: ${{ steps.check-env.outputs.has-itch-target }}
+    steps:
+      - id: check-env
+        run: |
+          if [[ -z "$itch_target" ]]; then
+            echo "has-itch-target=no" >> $GITHUB_OUTPUT
+          else
+            echo "has-itch-target=yes" >> $GITHUB_OUTPUT
+          fi
 
-  # upload-to-itch:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - check-if-upload-to-itch-is-configured
-  #     - release-wasm
-  #     # - release-linux
-  #     - release-windows
-  #     # - release-macOS-intel
-  #     # - release-macOS-apple-silicon
-  #   if: ${{ needs.check-if-upload-to-itch-is-configured.outputs.should-upload == 'yes' }}
+  upload-to-itch:
+    runs-on: ubuntu-latest
+    needs:
+      - check-if-upload-to-itch-is-configured
+      - release-wasm
+      # - release-linux
+      - release-windows
+      # - release-macOS-intel
+      # - release-macOS-apple-silicon
+    if: ${{ needs.check-if-upload-to-itch-is-configured.outputs.should-upload == 'yes' }}
 
-  #   steps:
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         path: ./builds
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./builds
 
-  #     - name: Install butler
-  #       run: |
-  #         curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-  #         unzip butler.zip
-  #         chmod +x butler
-  #         ./butler -V
-  #     - uses: olegtarasov/get-tag@v2.1.2
-  #       id: get_version
-  #     - name: Upload to itch.io
-  #       env:
-  #         BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
-  #       run: |
-  #         for channel in $(ls builds); do
-  #           ./butler push \
-  #               --fix-permissions \
-  #               --userversion="${{ steps.get_version.outputs.tag }}" \
-  #               builds/$channel/* \
-  #               ${{ env.itch_target }}:$channel
-  #         done
+      - name: Install butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+      - uses: olegtarasov/get-tag@v2.1.2
+        id: get_version
+      - name: Upload to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+        run: |
+          for channel in $(ls builds); do
+            ./butler push \
+                --fix-permissions \
+                --userversion="${{ steps.get_version.outputs.tag }}" \
+                builds/$channel/* \
+                ${{ env.itch_target }}:$channel
+          done
