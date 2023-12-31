@@ -498,6 +498,7 @@ fn g_slip(
         level.0[logic_position.0][logic_position.1 + 1] = Ice.get_symbol();
         level.0[logic_position.0 + 1][logic_position.1] = Ice.get_symbol();
         level.0[logic_position.0 + 1][logic_position.1 + 1] = Ice.get_symbol();
+        level.0[position.0][position.1] = duck_char;
         level.0[position.0][position.1 + 1] = duck_char;
         level.0[position.0 + 1][position.1] = duck_char;
         level.0[position.0 + 1][position.1 + 1] = duck_char;
