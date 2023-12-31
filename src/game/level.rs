@@ -18,12 +18,12 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<BreadCount>()
             .init_resource::<TotalBreadCount>()
             .init_resource::<LevelStack>()
-            //.add_event::<PrintLevel>()
+            .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
             .add_systems(
                 Update,
                 (
-                    //print_level,
+                    print_level,
                     update_level,
                     level_restart,
                     load_other_level,

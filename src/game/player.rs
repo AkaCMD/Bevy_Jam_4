@@ -29,6 +29,7 @@ pub trait Duck {
     fn set_logic_position(&mut self, position: (usize, usize));
     fn set_is_stuffed(&mut self, is_stuffed: bool);
     fn set_can_move(&mut self, can_move: bool);
+    fn get_edge_positions(&self, direction: utils::Direction) -> Vec<(usize, usize)>;
 }
 
 #[derive(Component)]
@@ -65,6 +66,10 @@ impl Duck for CommonDuck {
 
     fn set_can_move(&mut self, can_move: bool) {
         self.can_move = can_move;
+    }
+
+    fn get_edge_positions(&self, _direction: utils::Direction) -> Vec<(usize, usize)> {
+        vec![self.logic_position]
     }
 }
 
@@ -109,6 +114,28 @@ impl Duck for GluttonousDuck {
     fn set_can_move(&mut self, can_move: bool) {
         self.can_move = can_move;
     }
+
+    fn get_edge_positions(&self, direction: utils::Direction) -> Vec<(usize, usize)> {
+        match direction {
+            utils::Direction::Up => vec![
+                self.get_occupied_positions()[0],
+                self.get_occupied_positions()[2],
+            ],
+            utils::Direction::Down => vec![
+                self.get_occupied_positions()[1],
+                self.get_occupied_positions()[3],
+            ],
+            utils::Direction::Left => vec![
+                self.get_occupied_positions()[0],
+                self.get_occupied_positions()[1],
+            ],
+            utils::Direction::Right => vec![
+                self.get_occupied_positions()[2],
+                self.get_occupied_positions()[3],
+            ],
+            utils::Direction::None => vec![(0, 0), (0, 0)], // Never reach
+        }
+    }
 }
 
 // the chosen duck
@@ -136,7 +163,7 @@ fn player_movement(
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
     mut event_shake: EventWriter<ShakeOtherDucksInDir>,
-    //mut events_print: EventWriter<PrintLevel>,
+    mut events_print: EventWriter<level::PrintLevel>,
     // resource
     key_board_input: Res<Input<KeyCode>>,
     level: ResMut<level::Level>,
@@ -145,9 +172,11 @@ fn player_movement(
     if let Ok((transform, mut sprite, mut image, c_duck, g_duck, entity)) =
         player_query.get_single_mut()
     {
+        let mut is_common_duck = true;
         let duck: &mut dyn Duck = if let Some(c_duck) = c_duck {
             c_duck.into_inner()
         } else {
+            is_common_duck = false;
             g_duck.unwrap().into_inner()
         };
 
@@ -174,7 +203,11 @@ fn player_movement(
         if direction != utils::Direction::None {
             let duck_is_stuffed_before = duck.is_stuffed();
             let duck_can_move_before = duck.can_move();
-            let end_position = slip(duck, direction, level);
+            let end_position = if is_common_duck {
+                slip(duck, direction, level)
+            } else {
+                g_slip(duck, direction, level)
+            };
             let duck_is_stuffed_after = duck.is_stuffed();
             let duck_can_move_after = duck.can_move();
 
@@ -205,13 +238,25 @@ fn player_movement(
                 Duration::from_millis(DUCK_MOVE_MILI_SECS),
                 TransformPositionLens {
                     start: transform.translation,
-                    end: Vec3::new(v3.x, v3.y, 1.0),
+                    end: if is_common_duck {
+                        Vec3::new(v3.x, v3.y, 1.0)
+                    } else {
+                        Vec3::new(v3.x, v3.y, 1.0)
+                            + Vec3 {
+                                x: SPRITE_SIZE / 2.,
+                                y: -SPRITE_SIZE / 2.,
+                                z: 0.,
+                            }
+                    },
                 },
             )
             .with_repeat_count(1);
 
             // Scale the duck while moving
-            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
+            let mut origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
+            if duck.get_occupied_positions().len() == 4 {
+                origin_scale = Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0);
+            }
             let new_scale = transform.scale * Vec3::new(1.3, 0.7, 1.);
             let tween_scale = Tween::new(
                 EaseFunction::QuadraticInOut,
@@ -238,23 +283,21 @@ fn player_movement(
                 path: "audio/quark.ogg".to_string(),
                 volume: bevy::audio::Volume::new_absolute(0.5),
             });
-            //events_print.send(PrintLevel);
+            events_print.send(level::PrintLevel);
             events_update.send(UpdateLevel);
         }
     }
 }
 
 // Slip until hitting the wall or bread
+// common duck
 fn slip(
     duck: &mut dyn Duck,
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
 ) -> (usize, usize) {
-    // Up: row--
-    // Down: row++
-    // Left: col--
-    // Right: col++
+    // Up: row--, Down: row++, Left: col--, Right: col++
     let rows = level.0.len();
     let logic_position = duck.get_logic_position();
     let cols = level.0[logic_position.0].len();
@@ -302,6 +345,9 @@ fn slip(
     if duck.is_stuffed() {
         duck_char = StuffedDuckOnIce.get_symbol();
     }
+    if duck.is_stuffed() && duck.get_occupied_positions().len() == 4 {
+        duck_char = GluttonousDuck.get_symbol();
+    }
 
     if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
         level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
@@ -319,12 +365,158 @@ fn slip(
     position
 }
 
+// Slip until hitting the wall or bread
+// Gluttonous duck
+fn g_slip(
+    duck: &mut dyn Duck,
+    direction: utils::Direction,
+    // resource
+    mut level: ResMut<level::Level>,
+) -> (usize, usize) {
+    // Up: row--, Down: row++, Left: col--, Right: col++
+    let rows = level.0.len();
+    let logic_position = duck.get_logic_position();
+    let mut position_1 = duck.get_edge_positions(direction)[0];
+    let mut position_2 = duck.get_edge_positions(direction)[1];
+    let cols = if level.0[position_1.0].len() > level.0[position_2.0].len() {
+        level.0[position_2.0].len()
+    } else {
+        level.0[position_1.0].len()
+    };
+    let delta_1 = (
+        position_1.0 - logic_position.0,
+        position_1.1 - logic_position.1,
+    );
+    let delta_2 = (
+        position_2.0 - logic_position.0,
+        position_2.1 - logic_position.1,
+    );
+    let mut position = logic_position;
+
+    match direction {
+        utils::Direction::Up => {
+            while position_1.0 > 0
+                && position_2.0 > 0
+                && is_valid_move(level.0[position_1.0 - 1][position_1.1], duck)
+                && is_valid_move(level.0[position_2.0 - 1][position_2.1], duck)
+            {
+                position_1.0 -= 1;
+                position_2.0 -= 1;
+                position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
+                }
+                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
+                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
+                    break;
+                }
+            }
+        }
+        utils::Direction::Down => {
+            while position_1.0 < rows - 1
+                && position_2.0 < rows - 1
+                && is_valid_move(level.0[position_1.0 + 1][position_1.1], duck)
+                && is_valid_move(level.0[position_2.0 + 1][position_2.1], duck)
+            {
+                position_1.0 += 1;
+                position_2.0 += 1;
+                position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
+                }
+                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
+                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
+                    break;
+                }
+            }
+        }
+        utils::Direction::Left => {
+            while position_1.1 > 0
+                && position_2.1 > 0
+                && is_valid_move(level.0[position_1.0][position_1.1 - 1], duck)
+                && is_valid_move(level.0[position_2.0][position_2.1 - 1], duck)
+            {
+                position_1.1 -= 1;
+                position_2.1 -= 1;
+                position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
+                }
+                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
+                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
+                    break;
+                }
+            }
+        }
+        utils::Direction::Right => {
+            while position_1.1 < cols - 1
+                && position_2.1 < cols - 1
+                && is_valid_move(level.0[position_1.0][position_1.1 + 1], duck)
+                && is_valid_move(level.0[position_2.0][position_2.1 + 1], duck)
+            {
+                position_1.1 += 1;
+                position_2.1 += 1;
+                position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
+                }
+                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
+                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
+                    break;
+                }
+            }
+        }
+        _ => (),
+    }
+
+    // Update symbols on the level
+    let mut duck_char: char = DuckOnIce.get_symbol();
+    if duck.is_stuffed() {
+        duck_char = StuffedDuckOnIce.get_symbol();
+    }
+    if duck.is_stuffed() && duck.get_occupied_positions().len() == 4 {
+        duck_char = GluttonousDuck.get_symbol();
+    }
+
+    if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
+        level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
+    } else {
+        level.0[logic_position.0][logic_position.1] = Ice.get_symbol();
+    }
+    if level.0[position.0][position.1] == BreakingIce.get_symbol() {
+        level.0[position.0][position.1] = DuckOnBreakingIce.get_symbol();
+    } else {
+        level.0[position.0][position.1] = duck_char;
+    }
+
+    // TODO: remove this temp code
+    if duck_char == GluttonousDuck.get_symbol() {
+        level.0[logic_position.0][logic_position.1 + 1] = Ice.get_symbol();
+        level.0[logic_position.0 + 1][logic_position.1] = Ice.get_symbol();
+        level.0[logic_position.0 + 1][logic_position.1 + 1] = Ice.get_symbol();
+        level.0[position.0][position.1 + 1] = duck_char;
+        level.0[position.0 + 1][position.1] = duck_char;
+        level.0[position.0 + 1][position.1 + 1] = duck_char;
+    }
+
+    if !duck.can_move() {
+        level.0[position.0][position.1] = DuckOnWater.get_symbol();
+    }
+    position
+}
+
+// TODO: Fix the collide with g_duck
 fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
     symbol != Wall.get_symbol()
         && symbol != DuckOnIce.get_symbol()
         && symbol != DuckOnWater.get_symbol()
         && symbol != DuckOnBreakingIce.get_symbol()
         && symbol != StuffedDuckOnIce.get_symbol()
+        && symbol != GluttonousDuck.get_symbol()
         && (!duck.is_stuffed() || symbol != BreadOnIce.get_symbol())
 }
 
@@ -389,7 +581,7 @@ fn shake_other_ducks_in_direction(
         }
 
         for entity in ducks_to_shake {
-            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
+            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0); // TODO: get orgin scale
             let new_scale = origin_scale * Vec3::new(1.3, 0.7, 1.);
             let tween_scale = Tween::new(
                 EaseFunction::QuadraticInOut,
@@ -407,37 +599,3 @@ fn shake_other_ducks_in_direction(
         }
     }
 }
-
-// TODO: finish it
-// fn move_together(
-//     g_duck: &mut GluttonousDuck,
-//     mut level: ResMut<level::Level>,
-//     occupied_positions: Vec<(usize, usize)>,
-//     direction: utils::Direction,
-// ) {
-//     let edge_position = find_edge_position(&occupied_positions, direction);
-//     match direction {
-//         utils::Direction::Up => {
-//             for pos in occupied_positions.iter() {
-//                 if pos.0 == edge_position {}
-//             }
-//         }
-//         utils::Direction::Down => todo!(),
-//         utils::Direction::Left => todo!(),
-//         utils::Direction::Right => todo!(),
-//         utils::Direction::None => todo!(),
-//     }
-// }
-
-// fn find_edge_position(
-//     occupied_positions: &Vec<(usize, usize)>,
-//     direction: utils::Direction,
-// ) -> usize {
-//     match direction {
-//         utils::Direction::Up => occupied_positions.iter().min_by_key(|&(a, _)| a).unwrap().0,
-//         utils::Direction::Down => occupied_positions.iter().max_by_key(|&(a, _)| a).unwrap().0,
-//         utils::Direction::Left => occupied_positions.iter().min_by_key(|&(_, a)| a).unwrap().1,
-//         utils::Direction::Right => occupied_positions.iter().max_by_key(|&(_, a)| a).unwrap().1,
-//         utils::Direction::None => 0,
-//     }
-// }
