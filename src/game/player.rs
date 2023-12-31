@@ -126,7 +126,8 @@ fn player_movement(
             &mut Transform,
             &mut Sprite,
             &mut Handle<Image>,
-            &mut CommonDuck,
+            Option<&mut CommonDuck>,
+            Option<&mut GluttonousDuck>,
             Entity,
         ),
         With<Player>,
@@ -141,8 +142,15 @@ fn player_movement(
     level: ResMut<level::Level>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Ok((transform, mut sprite, mut image, mut duck, entity)) = player_query.get_single_mut()
+    if let Ok((transform, mut sprite, mut image, c_duck, g_duck, entity)) =
+        player_query.get_single_mut()
     {
+        let duck: &mut dyn Duck = if let Some(c_duck) = c_duck {
+            c_duck.into_inner()
+        } else {
+            g_duck.unwrap().into_inner()
+        };
+
         if !duck.can_move() {
             return;
         }
@@ -166,7 +174,7 @@ fn player_movement(
         if direction != utils::Direction::None {
             let duck_is_stuffed_before = duck.is_stuffed();
             let duck_can_move_before = duck.can_move();
-            let end_position = slip(&mut duck, direction, level);
+            let end_position = slip(duck, direction, level);
             let duck_is_stuffed_after = duck.is_stuffed();
             let duck_can_move_after = duck.can_move();
 
@@ -189,7 +197,7 @@ fn player_movement(
             }
 
             // Update object positions
-            duck.logic_position = end_position;
+            duck.set_logic_position(end_position);
             // Update the translation of ducks
             let v3 = logic_position_to_translation(end_position);
             let tween_translation = Tween::new(
@@ -238,7 +246,7 @@ fn player_movement(
 
 // Slip until hitting the wall or bread
 fn slip(
-    duck: &mut CommonDuck,
+    duck: &mut dyn Duck,
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
@@ -311,7 +319,7 @@ fn slip(
     position
 }
 
-fn is_valid_move(symbol: char, duck: &impl Duck) -> bool {
+fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
     symbol != Wall.get_symbol()
         && symbol != DuckOnIce.get_symbol()
         && symbol != DuckOnWater.get_symbol()
@@ -320,7 +328,7 @@ fn is_valid_move(symbol: char, duck: &impl Duck) -> bool {
         && (!duck.is_stuffed() || symbol != BreadOnIce.get_symbol())
 }
 
-fn collide_with_object(symbol: char, duck: &mut impl Duck) -> bool {
+fn collide_with_object(symbol: char, duck: &mut dyn Duck) -> bool {
     let mut should_stop = false;
     if symbol == BreadOnIce.get_symbol() {
         duck.set_is_stuffed(true);
