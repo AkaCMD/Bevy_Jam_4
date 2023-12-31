@@ -20,20 +20,95 @@ impl bevy::app::Plugin for Plugin {
         .add_event::<ShakeOtherDucksInDir>();
     }
 }
-// TODO: turn it into a trait?
+
+pub trait Duck {
+    fn get_logic_position(&self) -> (usize, usize);
+    fn get_occupied_positions(&self) -> Vec<(usize, usize)>;
+    fn is_stuffed(&self) -> bool;
+    fn can_move(&self) -> bool;
+    fn set_logic_position(&mut self, position: (usize, usize));
+    fn set_is_stuffed(&mut self, is_stuffed: bool);
+    fn set_can_move(&mut self, can_move: bool);
+}
+
 #[derive(Component)]
-pub struct Duck {
+pub struct CommonDuck {
     pub logic_position: (usize, usize),
     pub is_stuffed: bool, // one duck, one bread
     pub can_move: bool,   // stuffed_duck on breaking_ice => can't move
 }
 
+impl Duck for CommonDuck {
+    fn get_logic_position(&self) -> (usize, usize) {
+        self.logic_position
+    }
+
+    fn get_occupied_positions(&self) -> Vec<(usize, usize)> {
+        vec![self.logic_position]
+    }
+
+    fn is_stuffed(&self) -> bool {
+        self.is_stuffed
+    }
+
+    fn can_move(&self) -> bool {
+        self.can_move
+    }
+
+    fn set_logic_position(&mut self, position: (usize, usize)) {
+        self.logic_position = position;
+    }
+
+    fn set_is_stuffed(&mut self, is_stuffed: bool) {
+        self.is_stuffed = is_stuffed;
+    }
+
+    fn set_can_move(&mut self, can_move: bool) {
+        self.can_move = can_move;
+    }
+}
+
 #[derive(Component)]
 pub struct GluttonousDuck {
     pub logic_position: (usize, usize),
-    pub occupied_positions: Vec<(usize, usize)>,
     pub has_eaten_bread: u32,
+    pub is_stuffed: bool,
     pub can_move: bool,
+}
+
+impl Duck for GluttonousDuck {
+    fn get_logic_position(&self) -> (usize, usize) {
+        self.logic_position
+    }
+
+    fn get_occupied_positions(&self) -> Vec<(usize, usize)> {
+        vec![
+            self.logic_position,
+            (self.logic_position.0 + 1, self.logic_position.1),
+            (self.logic_position.0, self.logic_position.1 + 1),
+            (self.logic_position.0 + 1, self.logic_position.1 + 1),
+        ]
+    }
+
+    fn is_stuffed(&self) -> bool {
+        self.is_stuffed
+    }
+
+    fn can_move(&self) -> bool {
+        self.can_move
+    }
+
+    fn set_logic_position(&mut self, position: (usize, usize)) {
+        self.logic_position = position;
+    }
+
+    fn set_is_stuffed(&mut self, is_stuffed: bool) {
+        self.is_stuffed = is_stuffed;
+    }
+
+    fn set_can_move(&mut self, can_move: bool) {
+        self.can_move = can_move;
+    }
 }
 
 // the chosen duck
@@ -51,7 +126,7 @@ fn player_movement(
             &mut Transform,
             &mut Sprite,
             &mut Handle<Image>,
-            &mut Duck,
+            &mut CommonDuck,
             Entity,
         ),
         With<Player>,
@@ -68,7 +143,7 @@ fn player_movement(
 ) {
     if let Ok((transform, mut sprite, mut image, mut duck, entity)) = player_query.get_single_mut()
     {
-        if !duck.can_move {
+        if !duck.can_move() {
             return;
         }
         let mut direction = utils::Direction::None;
@@ -89,11 +164,11 @@ fn player_movement(
             direction = Direction::Down;
         }
         if direction != utils::Direction::None {
-            let duck_is_stuffed_before = duck.is_stuffed;
-            let duck_can_move_before = duck.can_move;
+            let duck_is_stuffed_before = duck.is_stuffed();
+            let duck_can_move_before = duck.can_move();
             let end_position = slip(&mut duck, direction, level);
-            let duck_is_stuffed_after = duck.is_stuffed;
-            let duck_can_move_after = duck.can_move;
+            let duck_is_stuffed_after = duck.is_stuffed();
+            let duck_can_move_after = duck.can_move();
 
             // TODO: delay it
             if !duck_is_stuffed_before && duck_is_stuffed_after {
@@ -145,7 +220,7 @@ fn player_movement(
             commands.entity(entity).insert(Animator::new(track));
             event_shake.send(ShakeOtherDucksInDir {
                 direction,
-                player_logic_position: duck.logic_position,
+                player_logic_position: duck.get_logic_position(),
             });
             //let v3 = logic_position_to_translation(end_position, window_query.get_single().unwrap());
             //transform.translation = Vec3::new(v3.x, v3.y, 1.0);
@@ -163,7 +238,7 @@ fn player_movement(
 
 // Slip until hitting the wall or bread
 fn slip(
-    duck: &mut Duck,
+    duck: &mut CommonDuck,
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
@@ -173,7 +248,7 @@ fn slip(
     // Left: col--
     // Right: col++
     let rows = level.0.len();
-    let logic_position = duck.logic_position;
+    let logic_position = duck.get_logic_position();
     let cols = level.0[logic_position.0].len();
     let mut position = logic_position;
     match direction {
@@ -216,7 +291,7 @@ fn slip(
 
     // Update symbols on the level
     let mut duck_char: char = DuckOnIce.get_symbol();
-    if duck.is_stuffed {
+    if duck.is_stuffed() {
         duck_char = StuffedDuckOnIce.get_symbol();
     }
 
@@ -230,29 +305,29 @@ fn slip(
     } else {
         level.0[position.0][position.1] = duck_char;
     }
-    if !duck.can_move {
+    if !duck.can_move() {
         level.0[position.0][position.1] = DuckOnWater.get_symbol();
     }
     position
 }
 
-fn is_valid_move(symbol: char, duck: &Duck) -> bool {
+fn is_valid_move(symbol: char, duck: &impl Duck) -> bool {
     symbol != Wall.get_symbol()
         && symbol != DuckOnIce.get_symbol()
         && symbol != DuckOnWater.get_symbol()
         && symbol != DuckOnBreakingIce.get_symbol()
         && symbol != StuffedDuckOnIce.get_symbol()
-        && (!duck.is_stuffed || symbol != BreadOnIce.get_symbol())
+        && (!duck.is_stuffed() || symbol != BreadOnIce.get_symbol())
 }
 
-fn collide_with_object(symbol: char, duck: &mut Duck) -> bool {
+fn collide_with_object(symbol: char, duck: &mut impl Duck) -> bool {
     let mut should_stop = false;
     if symbol == BreadOnIce.get_symbol() {
-        duck.is_stuffed = true;
+        duck.set_is_stuffed(true);
         should_stop = true;
     }
-    if symbol == BreakingIce.get_symbol() && duck.is_stuffed {
-        duck.can_move = false;
+    if symbol == BreakingIce.get_symbol() && duck.is_stuffed() {
+        duck.set_can_move(false);
         should_stop = true;
     }
     should_stop

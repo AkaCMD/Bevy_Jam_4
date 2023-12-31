@@ -1,5 +1,5 @@
 use super::{
-    player::{Duck, GluttonousDuck},
+    player::{CommonDuck, GluttonousDuck},
     *,
 };
 use crate::game::player::Player;
@@ -31,8 +31,8 @@ fn get_cursor_position(
     // query
     window_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
-    duck_query: Query<&Duck, (With<Duck>, Without<Player>)>,
-    g_duck_query: Query<&GluttonousDuck, (With<Duck>, Without<Player>)>,
+    duck_query: Query<&CommonDuck, (With<CommonDuck>, Without<Player>)>,
+    g_duck_query: Query<&GluttonousDuck, (With<GluttonousDuck>, Without<Player>)>,
     arrow_query: Query<Entity, (With<ArrowHint>, Without<Parent>)>,
 ) {
     let (camera, camera_transform) = camera_query.single();
@@ -85,12 +85,12 @@ fn get_cursor_position(
                     SpriteBundle {
                         transform: Transform {
                             translation: Vec3::new(
-                                duck_position.x,
-                                duck_position.y + SPRITE_SIZE * 2.,
+                                duck_position.x + SPRITE_SIZE / 2.,
+                                duck_position.y + SPRITE_SIZE * 1.5,
                                 2.0,
                             ),
                             rotation: Quat::IDENTITY,
-                            scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
+                            scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
                         },
                         texture: asset_server.load("sprites/arrow.png"),
                         ..default()
@@ -108,7 +108,7 @@ pub fn click_detection(
     // event
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     // query
-    duck_query: Query<(&Duck, Entity), (With<Duck>, Without<Player>)>,
+    duck_query: Query<(&CommonDuck, Entity), (With<CommonDuck>, Without<Player>)>,
     g_duck_query: Query<(&GluttonousDuck, Entity), (With<GluttonousDuck>, Without<Player>)>,
     player_query: Query<Entity, With<Player>>,
     arrow_hint_query: Query<Entity, (With<ArrowHint>, With<Parent>)>,

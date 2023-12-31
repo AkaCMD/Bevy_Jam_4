@@ -1,6 +1,6 @@
 use super::{
     cursor::ArrowHint,
-    player::{Duck, GluttonousDuck},
+    player::{CommonDuck, GluttonousDuck},
     ui::Won,
     *,
 };
@@ -64,7 +64,8 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level10.txt",
             "..\\..\\assets\\levels\\level11.txt",
             "..\\..\\assets\\levels\\level12.txt",
-            "..\\..\\assets\\levels\\level13.txt" // "..\\..\\assets\\levels\\level14.txt"
+            "..\\..\\assets\\levels\\level13.txt",
+            "..\\..\\assets\\levels\\level14.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -81,7 +82,8 @@ impl Default for Levels {
             "../../assets/levels/level10.txt",
             "../../assets/levels/level11.txt",
             "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt" // "../../assets/levels/level14.txt"
+            "../../assets/levels/level13.txt",
+            "../../assets/levels/level14.txt"
         );
 
         Self { levels }
@@ -239,7 +241,7 @@ fn update_level(
         Entity,
         (
             With<Object>,
-            Without<Duck>,
+            Without<CommonDuck>,
             Without<ArrowHint>,
             Without<GluttonousDuck>,
         ),
@@ -320,7 +322,7 @@ fn spawn_duck(
             texture: sprite,
             ..default()
         },
-        Duck {
+        CommonDuck {
             logic_position,
             is_stuffed,
             can_move,
@@ -356,13 +358,8 @@ fn spawn_g_duck(
         },
         GluttonousDuck {
             logic_position,
-            occupied_positions: vec![
-                logic_position,
-                (logic_position.0 + 1, logic_position.1),
-                (logic_position.0, logic_position.1 + 1),
-                (logic_position.0 + 1, logic_position.1 + 1),
-            ],
             has_eaten_bread: 4,
+            is_stuffed: true,
             can_move,
         },
         Object,
