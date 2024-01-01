@@ -11,6 +11,7 @@ bevy = {version = "0.12.1", features = ["wav", "wayland"]}
 bevy_tweening = "0.9"
 wasm-bindgen = "0.2.89"
 bevy-inspector-egui = "0.22.0"
+bevy_wasm_window_resize = "0.2.1"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

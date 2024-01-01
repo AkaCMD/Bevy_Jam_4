@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
+use bevy_wasm_window_resize::WindowResizePlugin;
 //use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_tweening::TweeningPlugin;
 
@@ -16,6 +17,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Bevy Jam 4 🦀".into(),
+                        // Bind to canvas included in 'index.html'
                         mode: if cfg!(debug_assertions) {
                             bevy::window::WindowMode::Windowed
                         } else {
@@ -32,6 +34,7 @@ fn main() {
         )
         .add_plugins(game::Plugin)
         .add_plugins(TweeningPlugin)
+        .add_plugins(WindowResizePlugin)
         //.add_plugins(WorldInspectorPlugin::new()) // Only add this in debug version
         .run();
 }

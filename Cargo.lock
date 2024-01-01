@@ -1117,6 +1117,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_wasm_window_resize"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa9baa14f1a08b969b076f54af36c004ca4588960b42b57fdc9e5a408039cbe5"
+dependencies = [
+ "bevy",
+ "web-sys",
+]
+
+[[package]]
 name = "bevy_window"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3070,6 +3080,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_tweening",
+ "bevy_wasm_window_resize",
  "embed-resource",
  "wasm-bindgen",
 ]
