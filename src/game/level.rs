@@ -212,7 +212,7 @@ fn spawn_level(
     mut events: EventWriter<Won>,
 ) {
     // Load the level from a .txt file
-    if let Ok(mut level) = load_level(level_index.0, levels) {
+    if let Ok(level) = load_level(level_index.0, levels) {
         // clear the stack
         level_stack.0.clear();
 
@@ -226,24 +226,6 @@ fn spawn_level(
             true,
         );
         level_stack.0.push(level.0.clone());
-
-        // TODO: remove this prepocess code or refactor it, cuz it's stupid
-        ////////////////////
-        let mut g_duck_positions: Vec<(usize, usize)> = vec![];
-        for (row_index, row) in level.0.iter().enumerate() {
-            for (col_index, &ch) in row.iter().enumerate() {
-                if ch == ObjectType::GluttonousDuck.get_symbol() {
-                    g_duck_positions.push((row_index, col_index));
-                }
-            }
-        }
-        for (x, y) in g_duck_positions {
-            level.0[x][y + 1] = ObjectType::GluttonousDuck.get_symbol();
-            level.0[x + 1][y] = ObjectType::GluttonousDuck.get_symbol();
-            level.0[x + 1][y + 1] = ObjectType::GluttonousDuck.get_symbol();
-        }
-        ////////////////////
-
         commands.insert_resource(level);
         total_bread_count.0 = bread_count.0;
     }

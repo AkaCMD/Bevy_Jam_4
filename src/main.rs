@@ -16,7 +16,11 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Bevy Jam 4 🦀".into(),
-                        mode: bevy::window::WindowMode::Windowed,
+                        mode: if cfg!(debug_assertions) {
+                            bevy::window::WindowMode::Windowed
+                        } else {
+                            bevy::window::WindowMode::BorderlessFullscreen
+                        },
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
                         resizable: false,

@@ -159,6 +159,7 @@ fn player_movement(
         ),
         With<Player>,
     >,
+    g_duck_query: Query<&GluttonousDuck, Without<Player>>,
     // event
     mut events_sfx: EventWriter<PlaySFX>,
     mut events_update: EventWriter<UpdateLevel>,
@@ -204,7 +205,7 @@ fn player_movement(
             let duck_is_stuffed_before = duck.is_stuffed();
             let duck_can_move_before = duck.can_move();
             let end_position = if is_common_duck {
-                slip(duck, direction, level)
+                slip(duck, direction, level, g_duck_query)
             } else {
                 g_slip(duck, direction, level)
             };
@@ -296,6 +297,8 @@ fn slip(
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
+    // query
+    g_duck_query: Query<&GluttonousDuck, Without<Player>>,
 ) -> (usize, usize) {
     // Up: row--, Down: row++, Left: col--, Right: col++
     let rows = level.0.len();
@@ -305,6 +308,17 @@ fn slip(
     match direction {
         utils::Direction::Up => {
             while position.0 > 0 && is_valid_move(level.0[position.0 - 1][position.1], duck) {
+                let mut is_collide_with_g_duck = false;
+                for g_duck in g_duck_query.iter() {
+                    for pos in g_duck.get_occupied_positions() {
+                        if pos == (position.0 - 1, position.1) {
+                            is_collide_with_g_duck = true;
+                        }
+                    }
+                }
+                if is_collide_with_g_duck {
+                    break;
+                }
                 position.0 -= 1;
                 if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
@@ -314,6 +328,17 @@ fn slip(
         utils::Direction::Down => {
             while position.0 < rows - 1 && is_valid_move(level.0[position.0 + 1][position.1], duck)
             {
+                let mut is_collide_with_g_duck = false;
+                for g_duck in g_duck_query.iter() {
+                    for pos in g_duck.get_occupied_positions() {
+                        if pos == (position.0 + 1, position.1) {
+                            is_collide_with_g_duck = true;
+                        }
+                    }
+                }
+                if is_collide_with_g_duck {
+                    break;
+                }
                 position.0 += 1;
                 if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
@@ -322,6 +347,17 @@ fn slip(
         }
         utils::Direction::Left => {
             while position.1 > 0 && is_valid_move(level.0[position.0][position.1 - 1], duck) {
+                let mut is_collide_with_g_duck = false;
+                for g_duck in g_duck_query.iter() {
+                    for pos in g_duck.get_occupied_positions() {
+                        if pos == (position.0, position.1 - 1) {
+                            is_collide_with_g_duck = true;
+                        }
+                    }
+                }
+                if is_collide_with_g_duck {
+                    break;
+                }
                 position.1 -= 1;
                 if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
@@ -331,6 +367,17 @@ fn slip(
         utils::Direction::Right => {
             while position.1 < cols - 1 && is_valid_move(level.0[position.0][position.1 + 1], duck)
             {
+                let mut is_collide_with_g_duck = false;
+                for g_duck in g_duck_query.iter() {
+                    for pos in g_duck.get_occupied_positions() {
+                        if pos == (position.0, position.1 + 1) {
+                            is_collide_with_g_duck = true;
+                        }
+                    }
+                }
+                if is_collide_with_g_duck {
+                    break;
+                }
                 position.1 += 1;
                 if collide_with_object(level.0[position.0][position.1], duck) {
                     break;
@@ -372,6 +419,8 @@ fn g_slip(
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
+    // query
+    // g_duck_query: Query<&GluttonousDuck>, // TODO: add collision detection for g_ducks
 ) -> (usize, usize) {
     // Up: row--, Down: row++, Left: col--, Right: col++
     let rows = level.0.len();
@@ -491,17 +540,6 @@ fn g_slip(
         level.0[position.0][position.1] = DuckOnBreakingIce.get_symbol();
     } else {
         level.0[position.0][position.1] = duck_char;
-    }
-
-    // TODO: remove this temp code
-    if duck_char == GluttonousDuck.get_symbol() {
-        level.0[logic_position.0][logic_position.1 + 1] = Ice.get_symbol();
-        level.0[logic_position.0 + 1][logic_position.1] = Ice.get_symbol();
-        level.0[logic_position.0 + 1][logic_position.1 + 1] = Ice.get_symbol();
-        level.0[position.0][position.1] = duck_char;
-        level.0[position.0][position.1 + 1] = duck_char;
-        level.0[position.0 + 1][position.1] = duck_char;
-        level.0[position.0 + 1][position.1 + 1] = duck_char;
     }
 
     if !duck.can_move() {
