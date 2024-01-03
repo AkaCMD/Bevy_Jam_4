@@ -18,11 +18,7 @@ fn main() {
                     primary_window: Some(Window {
                         title: "Bevy Jam 4 🦀".into(),
                         // Bind to canvas included in 'index.html'
-                        mode: if cfg!(debug_assertions) {
-                            bevy::window::WindowMode::Windowed
-                        } else {
-                            bevy::window::WindowMode::BorderlessFullscreen
-                        },
+                        mode: bevy::window::WindowMode::Windowed,
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
                         resizable: false,
