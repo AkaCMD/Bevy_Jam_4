@@ -86,11 +86,11 @@ fn get_cursor_position(
                         transform: Transform {
                             translation: Vec3::new(
                                 duck_position.x + SPRITE_SIZE / 2.,
-                                duck_position.y + SPRITE_SIZE * 1.5,
+                                duck_position.y + SPRITE_SIZE,
                                 2.0,
                             ),
                             rotation: Quat::IDENTITY,
-                            scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
+                            scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
                         },
                         texture: asset_server.load("sprites/arrow.png"),
                         ..default()
@@ -169,7 +169,8 @@ pub fn click_detection(
                             parent.spawn((
                                 SpriteBundle {
                                     transform: Transform {
-                                        translation: Vec3::new(0.0, 500.0, 1.0),
+                                        translation: Vec3::new(0.0, 400.0, 1.0),
+                                        scale: Vec3::new(0.5, 0.5, 1.),
                                         ..default()
                                     },
                                     texture: asset_server.load("sprites/arrow.png"),

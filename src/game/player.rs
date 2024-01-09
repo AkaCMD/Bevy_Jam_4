@@ -187,19 +187,19 @@ fn player_movement(
         let mut direction = utils::Direction::None;
 
         if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
-            direction = Direction::Left;
+            direction = utils::Direction::Left;
             sprite.flip_x = false;
         }
         if key_board_input.just_pressed(KeyCode::Right) || key_board_input.just_pressed(KeyCode::D)
         {
-            direction = Direction::Right;
+            direction = utils::Direction::Right;
             sprite.flip_x = true;
         }
         if key_board_input.just_pressed(KeyCode::Up) || key_board_input.just_pressed(KeyCode::W) {
-            direction = Direction::Up;
+            direction = utils::Direction::Up;
         }
         if key_board_input.just_pressed(KeyCode::Down) || key_board_input.just_pressed(KeyCode::S) {
-            direction = Direction::Down;
+            direction = utils::Direction::Down;
         }
         if direction != utils::Direction::None {
             let duck_is_stuffed_before = duck.is_stuffed();
@@ -419,8 +419,6 @@ fn g_slip(
     direction: utils::Direction,
     // resource
     mut level: ResMut<level::Level>,
-    // query
-    // g_duck_query: Query<&GluttonousDuck>, // TODO: add collision detection for g_ducks
 ) -> (usize, usize) {
     // Up: row--, Down: row++, Left: col--, Right: col++
     let rows = level.0.len();
@@ -436,12 +434,10 @@ fn g_slip(
         position_1.0 - logic_position.0,
         position_1.1 - logic_position.1,
     );
-    let delta_2 = (
-        position_2.0 - logic_position.0,
-        position_2.1 - logic_position.1,
-    );
     let mut position = logic_position;
+    let mut occupied_positions = duck.get_occupied_positions();
 
+    let level_data = level.0.clone();
     match direction {
         utils::Direction::Up => {
             while position_1.0 > 0
@@ -452,13 +448,11 @@ fn g_slip(
                 position_1.0 -= 1;
                 position_2.0 -= 1;
                 position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
-                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                    break;
+                for (row, _col) in &mut occupied_positions {
+                    *row -= 1;
                 }
-                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
-                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
-                    break;
+                if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
                 }
             }
         }
@@ -471,13 +465,11 @@ fn g_slip(
                 position_1.0 += 1;
                 position_2.0 += 1;
                 position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
-                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                    break;
+                for (row, _col) in &mut occupied_positions {
+                    *row += 1;
                 }
-                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
-                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
-                    break;
+                if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
                 }
             }
         }
@@ -490,13 +482,11 @@ fn g_slip(
                 position_1.1 -= 1;
                 position_2.1 -= 1;
                 position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
-                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                    break;
+                for (_row, col) in &mut occupied_positions {
+                    *col -= 1;
                 }
-                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
-                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
-                    break;
+                if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
                 }
             }
         }
@@ -509,13 +499,11 @@ fn g_slip(
                 position_1.1 += 1;
                 position_2.1 += 1;
                 position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                if collide_with_object(level.0[position_1.0][position_1.1], duck) {
-                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
-                    break;
+                for (_row, col) in &mut occupied_positions {
+                    *col += 1;
                 }
-                if collide_with_object(level.0[position_2.0][position_2.1], duck) {
-                    position = (position_2.0 - delta_2.0, position_2.1 - delta_2.1);
-                    break;
+                if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
+                    position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
                 }
             }
         }
@@ -544,11 +532,13 @@ fn g_slip(
 
     if !duck.can_move() {
         level.0[position.0][position.1] = DuckOnWater.get_symbol();
+        level.0[position.0 + 1][position.1] = BrokenIce.get_symbol();
+        level.0[position.0][position.1 + 1] = BrokenIce.get_symbol();
+        level.0[position.0 + 1][position.1 + 1] = BrokenIce.get_symbol();
     }
     position
 }
 
-// TODO: Fix the collide with g_duck
 fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
     symbol != Wall.get_symbol()
         && symbol != DuckOnIce.get_symbol()
@@ -559,17 +549,41 @@ fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
         && (!duck.is_stuffed() || symbol != BreadOnIce.get_symbol())
 }
 
+// TODO: replace it with eat_bread_or_break_ice
 fn collide_with_object(symbol: char, duck: &mut dyn Duck) -> bool {
-    let mut should_stop = false;
     if symbol == BreadOnIce.get_symbol() {
         duck.set_is_stuffed(true);
-        should_stop = true;
+        return true;
     }
     if symbol == BreakingIce.get_symbol() && duck.is_stuffed() {
         duck.set_can_move(false);
-        should_stop = true;
+        return true;
     }
-    should_stop
+    false
+}
+
+fn eat_bread_or_break_ice(
+    level: &[Vec<char>],
+    occupied_positions: Vec<(usize, usize)>,
+    duck: &mut dyn Duck,
+) -> bool {
+    let mut break_ice_cnt = 0;
+    let position_cnt = occupied_positions.len();
+    for pos in occupied_positions {
+        let (x, y) = pos;
+        if level[x][y] == BreadOnIce.get_symbol() {
+            duck.set_is_stuffed(true); // TODO: count the bread?
+            return true;
+        }
+        if level[x][y] == BreakingIce.get_symbol() {
+            break_ice_cnt += 1;
+        }
+    }
+    if duck.is_stuffed() && break_ice_cnt == position_cnt {
+        duck.set_can_move(false);
+        return true;
+    }
+    false
 }
 
 #[derive(Event)]
@@ -620,7 +634,7 @@ fn shake_other_ducks_in_direction(
         }
 
         for entity in ducks_to_shake {
-            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0); // TODO: get orgin scale
+            let origin_scale = Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0);
             let new_scale = origin_scale * Vec3::new(1.3, 0.7, 1.);
             let tween_scale = Tween::new(
                 EaseFunction::QuadraticInOut,

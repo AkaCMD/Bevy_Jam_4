@@ -65,7 +65,8 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level11.txt",
             "..\\..\\assets\\levels\\level12.txt",
             "..\\..\\assets\\levels\\level13.txt",
-            "..\\..\\assets\\levels\\level14.txt"
+            "..\\..\\assets\\levels\\level14.txt",
+            "..\\..\\assets\\levels\\level15.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -83,7 +84,8 @@ impl Default for Levels {
             "../../assets/levels/level11.txt",
             "../../assets/levels/level12.txt",
             "../../assets/levels/level13.txt",
-            "../../assets/levels/level14.txt"
+            "../../assets/levels/level14.txt",
+            "../../assets/levels/level15.txt"
         );
 
         Self { levels }
@@ -145,6 +147,7 @@ impl Default for BreadCount {
 pub enum ObjectType {
     Wall,
     Ice,
+    BrokenIce,
     DuckOnIce,
     StuffedDuckOnIce,
     BreadOnIce,
@@ -160,6 +163,7 @@ impl ObjectType {
         match self {
             ObjectType::Wall => '@',
             ObjectType::Ice => '#',
+            ObjectType::BrokenIce => '^',
             ObjectType::DuckOnIce => 'D',
             ObjectType::StuffedDuckOnIce => 'Q',
             ObjectType::BreadOnIce => 'B',
@@ -385,6 +389,7 @@ fn spawn_sprites(
             let object_type = match ch {
                 '@' => ObjectType::Wall,
                 '#' => ObjectType::Ice,
+                '^' => ObjectType::BrokenIce,
                 'D' => ObjectType::DuckOnIce,
                 'B' => ObjectType::BreadOnIce,
                 '*' => ObjectType::BreakingIce,
@@ -401,6 +406,9 @@ fn spawn_sprites(
                 }
                 ObjectType::Ice => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                }
+                ObjectType::BrokenIce => {
+                    spawn_object(commands, position, asset_server.load("sprites/water.png"));
                 }
                 ObjectType::DuckOnIce => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
@@ -489,7 +497,7 @@ fn spawn_sprites(
                                     y: -SPRITE_SIZE / 2.,
                                     z: 0.,
                                 },
-                            asset_server.load("sprites/stuffed_duck.png"),
+                            asset_server.load("sprites/g_duck_stuffed.png"),
                             (row_index, col_index),
                             true,
                         );

@@ -8,7 +8,7 @@ mod player;
 mod ui;
 mod utils;
 
-use utils::{Direction, *};
+use utils::*;
 
 pub const RESIZE: f32 = 0.1;
 pub const SPRITE_SIZE: f32 = 640.0 * RESIZE;
