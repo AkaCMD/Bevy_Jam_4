@@ -125,7 +125,6 @@ pub fn click_detection(
                     y: duck_position_v3.y,
                 };
                 if (cursor_position.0 - duck_position).length() < DISTANCE {
-                    //info!("You are the chosen one!");
                     commands
                         .entity(entity)
                         .insert(Player)

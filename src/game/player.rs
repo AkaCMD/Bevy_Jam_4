@@ -27,9 +27,9 @@ pub trait Duck {
     fn is_stuffed(&self) -> bool;
     fn can_move(&self) -> bool;
     fn set_logic_position(&mut self, position: (usize, usize));
-    fn set_is_stuffed(&mut self, is_stuffed: bool);
     fn set_can_move(&mut self, can_move: bool);
     fn get_edge_positions(&self, direction: utils::Direction) -> Vec<(usize, usize)>;
+    fn eat_bread(&mut self);
 }
 
 #[derive(Component)]
@@ -37,6 +37,8 @@ pub struct CommonDuck {
     pub logic_position: (usize, usize),
     pub is_stuffed: bool, // one duck, one bread
     pub can_move: bool,   // stuffed_duck on breaking_ice => can't move
+    pub bread_sum: u32,
+    pub belly_capacity: u32,
 }
 
 impl Duck for CommonDuck {
@@ -49,7 +51,7 @@ impl Duck for CommonDuck {
     }
 
     fn is_stuffed(&self) -> bool {
-        self.is_stuffed
+        self.bread_sum == self.belly_capacity
     }
 
     fn can_move(&self) -> bool {
@@ -60,10 +62,6 @@ impl Duck for CommonDuck {
         self.logic_position = position;
     }
 
-    fn set_is_stuffed(&mut self, is_stuffed: bool) {
-        self.is_stuffed = is_stuffed;
-    }
-
     fn set_can_move(&mut self, can_move: bool) {
         self.can_move = can_move;
     }
@@ -71,12 +69,17 @@ impl Duck for CommonDuck {
     fn get_edge_positions(&self, _direction: utils::Direction) -> Vec<(usize, usize)> {
         vec![self.logic_position]
     }
+
+    fn eat_bread(&mut self) {
+        self.bread_sum += 1;
+    }
 }
 
 #[derive(Component)]
 pub struct GluttonousDuck {
     pub logic_position: (usize, usize),
-    pub has_eaten_bread: u32,
+    pub bread_sum: u32,
+    pub belly_capacity: u32,
     pub is_stuffed: bool,
     pub can_move: bool,
 }
@@ -96,7 +99,7 @@ impl Duck for GluttonousDuck {
     }
 
     fn is_stuffed(&self) -> bool {
-        self.is_stuffed
+        self.bread_sum == self.belly_capacity
     }
 
     fn can_move(&self) -> bool {
@@ -105,10 +108,6 @@ impl Duck for GluttonousDuck {
 
     fn set_logic_position(&mut self, position: (usize, usize)) {
         self.logic_position = position;
-    }
-
-    fn set_is_stuffed(&mut self, is_stuffed: bool) {
-        self.is_stuffed = is_stuffed;
     }
 
     fn set_can_move(&mut self, can_move: bool) {
@@ -135,6 +134,10 @@ impl Duck for GluttonousDuck {
             ],
             utils::Direction::None => vec![(0, 0), (0, 0)], // Never reach
         }
+    }
+
+    fn eat_bread(&mut self) {
+        self.bread_sum += 1;
     }
 }
 
@@ -552,7 +555,7 @@ fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
 // TODO: replace it with eat_bread_or_break_ice
 fn collide_with_object(symbol: char, duck: &mut dyn Duck) -> bool {
     if symbol == BreadOnIce.get_symbol() {
-        duck.set_is_stuffed(true);
+        duck.eat_bread();
         return true;
     }
     if symbol == BreakingIce.get_symbol() && duck.is_stuffed() {
@@ -568,16 +571,20 @@ fn eat_bread_or_break_ice(
     duck: &mut dyn Duck,
 ) -> bool {
     let mut break_ice_cnt = 0;
+    let mut has_eaten = false;
     let position_cnt = occupied_positions.len();
     for pos in occupied_positions {
         let (x, y) = pos;
         if level[x][y] == BreadOnIce.get_symbol() {
-            duck.set_is_stuffed(true); // TODO: count the bread?
-            return true;
+            duck.eat_bread();
+            has_eaten = true;
         }
         if level[x][y] == BreakingIce.get_symbol() {
             break_ice_cnt += 1;
         }
+    }
+    if has_eaten {
+        return true;
     }
     if duck.is_stuffed() && break_ice_cnt == position_cnt {
         duck.set_can_move(false);

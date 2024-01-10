@@ -6,7 +6,7 @@ use super::{
 };
 use bevy::utils::thiserror;
 use thiserror::Error;
-// TODO: code refactor
+
 pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
@@ -330,6 +330,8 @@ fn spawn_duck(
             logic_position,
             is_stuffed,
             can_move,
+            bread_sum: if is_stuffed {1} else {0},
+            belly_capacity: 1,
         },
         Object,
     ));
@@ -362,9 +364,10 @@ fn spawn_g_duck(
         },
         GluttonousDuck {
             logic_position,
-            has_eaten_bread: 4,
+            bread_sum: 4,
             is_stuffed: true,
             can_move,
+            belly_capacity: 4,
         },
         Object,
     ));
@@ -635,12 +638,6 @@ fn undo_the_level(
         level_stack.0.pop();
         let origin_level = level_stack.0.peek().unwrap().clone();
         level.0 = origin_level;
-        // for row in level.0.iter() {
-        //     for ch in row {
-        //         print!("{}", ch);
-        //     }
-        //     println!();
-        // }
         for object in &object_query {
             commands.entity(object).despawn();
         }
