@@ -24,6 +24,7 @@ impl bevy::app::Plugin for Plugin {
 pub trait Duck {
     fn get_logic_position(&self) -> (usize, usize);
     fn get_occupied_positions(&self) -> Vec<(usize, usize)>;
+    fn get_bread_sum(&self) -> u32;
     fn is_stuffed(&self) -> bool;
     fn can_move(&self) -> bool;
     fn set_logic_position(&mut self, position: (usize, usize));
@@ -72,6 +73,10 @@ impl Duck for CommonDuck {
 
     fn eat_bread(&mut self) {
         self.bread_sum += 1;
+    }
+
+    fn get_bread_sum(&self) -> u32 {
+        self.bread_sum
     }
 }
 
@@ -139,6 +144,10 @@ impl Duck for GluttonousDuck {
     fn eat_bread(&mut self) {
         self.bread_sum += 1;
     }
+
+    fn get_bread_sum(&self) -> u32 {
+        self.bread_sum
+    }
 }
 
 // the chosen duck
@@ -205,24 +214,33 @@ fn player_movement(
             direction = utils::Direction::Down;
         }
         if direction != utils::Direction::None {
-            let duck_is_stuffed_before = duck.is_stuffed();
+            let duck_bread_sum_before = duck.get_bread_sum();
             let duck_can_move_before = duck.can_move();
+            let duck_is_stuffed_before = duck.is_stuffed();
             let end_position = if is_common_duck {
                 slip(duck, direction, level, g_duck_query)
             } else {
                 g_slip(duck, direction, level)
             };
-            let duck_is_stuffed_after = duck.is_stuffed();
+            let duck_bread_sum_after = duck.get_bread_sum();
             let duck_can_move_after = duck.can_move();
+            let duck_is_stuffed_after = duck.is_stuffed();
 
             // TODO: delay it
-            if !duck_is_stuffed_before && duck_is_stuffed_after {
+            if duck_bread_sum_after > duck_bread_sum_before {
                 // play eat sound
                 events_sfx.send(PlaySFX {
                     path: "audio/eat.ogg".to_string(),
                     volume: bevy::audio::Volume::new_absolute(0.2),
                 });
-                *image = asset_server.load("sprites/stuffed_duck.png");
+            }
+
+            if !duck_is_stuffed_before && duck_is_stuffed_after {
+                *image = if duck.get_occupied_positions().len() == 1 {
+                    asset_server.load("sprites/stuffed_duck.png")
+                } else {
+                    asset_server.load("sprites/g_duck_stuffed.png")
+                };
             }
 
             if duck_can_move_before && !duck_can_move_after {
@@ -396,7 +414,7 @@ fn slip(
         duck_char = StuffedDuckOnIce.get_symbol();
     }
     if duck.is_stuffed() && duck.get_occupied_positions().len() == 4 {
-        duck_char = GluttonousDuck.get_symbol();
+        duck_char = StuffedGluttonousDuck.get_symbol();
     }
 
     if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
@@ -456,6 +474,7 @@ fn g_slip(
                 }
                 if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
                     position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
                 }
             }
         }
@@ -473,6 +492,7 @@ fn g_slip(
                 }
                 if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
                     position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
                 }
             }
         }
@@ -490,6 +510,7 @@ fn g_slip(
                 }
                 if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
                     position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
                 }
             }
         }
@@ -507,6 +528,7 @@ fn g_slip(
                 }
                 if eat_bread_or_break_ice(&level_data, occupied_positions.clone(), duck) {
                     position = (position_1.0 - delta_1.0, position_1.1 - delta_1.1);
+                    break;
                 }
             }
         }
@@ -514,13 +536,11 @@ fn g_slip(
     }
 
     // Update symbols on the level
-    let mut duck_char: char = DuckOnIce.get_symbol();
-    if duck.is_stuffed() {
-        duck_char = StuffedDuckOnIce.get_symbol();
-    }
-    if duck.is_stuffed() && duck.get_occupied_positions().len() == 4 {
-        duck_char = GluttonousDuck.get_symbol();
-    }
+    let duck_char: char = if duck.is_stuffed() && duck.get_occupied_positions().len() == 4 {
+        StuffedGluttonousDuck.get_symbol()
+    } else {
+        GluttonousDuck.get_symbol()
+    };
 
     if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
         level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
@@ -531,6 +551,16 @@ fn g_slip(
         level.0[position.0][position.1] = DuckOnBreakingIce.get_symbol();
     } else {
         level.0[position.0][position.1] = duck_char;
+    }
+
+    if level.0[position.0 + 1][position.1] == BreadOnIce.get_symbol() {
+        level.0[position.0 + 1][position.1] = Ice.get_symbol();
+    }
+    if level.0[position.0][position.1 + 1] == BreadOnIce.get_symbol() {
+        level.0[position.0][position.1 + 1] = Ice.get_symbol();
+    }
+    if level.0[position.0 + 1][position.1 + 1] == BreadOnIce.get_symbol() {
+        level.0[position.0 + 1][position.1 + 1] = Ice.get_symbol();
     }
 
     if !duck.can_move() {
@@ -548,7 +578,7 @@ fn is_valid_move(symbol: char, duck: &dyn Duck) -> bool {
         && symbol != DuckOnWater.get_symbol()
         && symbol != DuckOnBreakingIce.get_symbol()
         && symbol != StuffedDuckOnIce.get_symbol()
-        && symbol != GluttonousDuck.get_symbol()
+        && symbol != StuffedGluttonousDuck.get_symbol()
         && (!duck.is_stuffed() || symbol != BreadOnIce.get_symbol())
 }
 
@@ -577,6 +607,7 @@ fn eat_bread_or_break_ice(
         let (x, y) = pos;
         if level[x][y] == BreadOnIce.get_symbol() {
             duck.eat_bread();
+            info!("吃饭，爽！");
             has_eaten = true;
         }
         if level[x][y] == BreakingIce.get_symbol() {

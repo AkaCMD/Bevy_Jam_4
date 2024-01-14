@@ -154,6 +154,7 @@ pub enum ObjectType {
     BreakingIce,
     DuckOnWater,
     DuckOnBreakingIce,
+    StuffedGluttonousDuck,
     GluttonousDuck,
 }
 
@@ -170,7 +171,8 @@ impl ObjectType {
             ObjectType::BreakingIce => '*',
             ObjectType::DuckOnWater => 'P',
             ObjectType::DuckOnBreakingIce => 'O',
-            ObjectType::GluttonousDuck => 'G',
+            ObjectType::StuffedGluttonousDuck => 'G',
+            ObjectType::GluttonousDuck => 'g',
         }
     }
 }
@@ -330,7 +332,7 @@ fn spawn_duck(
             logic_position,
             is_stuffed,
             can_move,
-            bread_sum: if is_stuffed {1} else {0},
+            bread_sum: if is_stuffed { 1 } else { 0 },
             belly_capacity: 1,
         },
         Object,
@@ -343,6 +345,34 @@ fn spawn_duck(
             asset_server.load("sprites/click_hint.png"),
         );
     }
+}
+
+fn spawn_stuffed_g_duck(
+    commands: &mut Commands,
+    position: Vec3,
+    sprite: Handle<Image>,
+    logic_position: (usize, usize),
+    can_move: bool,
+) {
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(position.x, position.y, 1.0),
+                rotation: Quat::IDENTITY,
+                scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
+            },
+            texture: sprite,
+            ..default()
+        },
+        GluttonousDuck {
+            logic_position,
+            bread_sum: 4,
+            is_stuffed: true,
+            can_move,
+            belly_capacity: 4,
+        },
+        Object,
+    ));
 }
 
 fn spawn_g_duck(
@@ -364,8 +394,8 @@ fn spawn_g_duck(
         },
         GluttonousDuck {
             logic_position,
-            bread_sum: 4,
-            is_stuffed: true,
+            bread_sum: 0,
+            is_stuffed: false,
             can_move,
             belly_capacity: 4,
         },
@@ -399,7 +429,8 @@ fn spawn_sprites(
                 'P' => ObjectType::DuckOnWater,
                 'O' => ObjectType::DuckOnBreakingIce,
                 'Q' => ObjectType::StuffedDuckOnIce,
-                'G' => ObjectType::GluttonousDuck,
+                'G' => ObjectType::StuffedGluttonousDuck,
+                'g' => ObjectType::GluttonousDuck,
                 _ => continue,
             };
 
@@ -489,6 +520,23 @@ fn spawn_sprites(
                         );
                     }
                 }
+                ObjectType::StuffedGluttonousDuck => {
+                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    if should_respawn_duck {
+                        spawn_stuffed_g_duck(
+                            commands,
+                            position
+                                + Vec3 {
+                                    x: SPRITE_SIZE / 2.,
+                                    y: -SPRITE_SIZE / 2.,
+                                    z: 0.,
+                                },
+                            asset_server.load("sprites/g_duck_stuffed.png"),
+                            (row_index, col_index),
+                            true,
+                        );
+                    }
+                }
                 ObjectType::GluttonousDuck => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     if should_respawn_duck {
@@ -500,7 +548,7 @@ fn spawn_sprites(
                                     y: -SPRITE_SIZE / 2.,
                                     z: 0.,
                                 },
-                            asset_server.load("sprites/g_duck_stuffed.png"),
+                            asset_server.load("sprites/g_duck.png"),
                             (row_index, col_index),
                             true,
                         );
