@@ -1,6 +1,6 @@
 use super::{
     cursor::ArrowHint,
-    player::{CommonDuck, GluttonousDuck},
+    player::{CommonDuck, Duck, GluttonousDuck},
     ui::Won,
     *,
 };
@@ -18,8 +18,10 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<BreadCount>()
             .init_resource::<TotalBreadCount>()
             .init_resource::<LevelStack>()
+            .init_resource::<BreadSumRecordStack>()
             .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
+            .add_event::<UpdateBreadSum>()
             .add_systems(
                 Update,
                 (
@@ -29,6 +31,7 @@ impl bevy::app::Plugin for Plugin {
                     load_other_level,
                     change_level_cheats,
                     undo_the_level,
+                    update_bread_sum_of_g_ducks,
                 ),
             );
     }
@@ -118,6 +121,14 @@ pub struct LevelStack(pub Stack<Vec<Vec<char>>>);
 impl Default for LevelStack {
     fn default() -> Self {
         LevelStack(Stack::new())
+    }
+}
+
+#[derive(Resource)]
+pub struct BreadSumRecordStack(pub Stack<Vec<((usize, usize), u32)>>);
+impl Default for BreadSumRecordStack {
+    fn default() -> Self {
+        BreadSumRecordStack(Stack::new())
     }
 }
 
@@ -214,13 +225,16 @@ fn spawn_level(
     mut total_bread_count: ResMut<TotalBreadCount>,
     levels: Res<Levels>,
     mut level_stack: ResMut<LevelStack>,
+    mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     mut events: EventWriter<Won>,
+    mut events_1: EventWriter<UpdateBreadSum>,
 ) {
     // Load the level from a .txt file
     if let Ok(level) = load_level(level_index.0, levels) {
         // clear the stack
         level_stack.0.clear();
+        bread_sum_record_stack.0.clear();
 
         spawn_sprites(
             &mut commands,
@@ -229,6 +243,7 @@ fn spawn_level(
             level_index.0,
             &mut bread_count,
             &mut events,
+            &mut events_1,
             true,
         );
         level_stack.0.push(level.0.clone());
@@ -242,6 +257,7 @@ fn update_level(
     // event
     mut events_update: EventReader<UpdateLevel>,
     mut events: EventWriter<Won>,
+    mut events_1: EventWriter<UpdateBreadSum>,
     // add the objects that won't be despawn to the filter
     object_query: Query<
         Entity,
@@ -252,12 +268,14 @@ fn update_level(
             Without<GluttonousDuck>,
         ),
     >,
+    g_duck_query: Query<&GluttonousDuck, With<GluttonousDuck>>,
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut level_stack: ResMut<LevelStack>,
+    mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
 ) {
     for _ in events_update.read() {
         // Do not despawn ducks, update the translations of ducks
@@ -266,6 +284,11 @@ fn update_level(
             commands.entity(object).despawn();
         }
         level_stack.0.push(level.0.clone());
+        let mut record: Vec<((usize, usize), u32)> = vec![];
+        for g_duck in g_duck_query.iter() {
+            record.push((g_duck.get_logic_position(), g_duck.get_bread_sum()));
+        }
+        bread_sum_record_stack.0.push(record);
         spawn_sprites(
             &mut commands,
             &level.0,
@@ -273,6 +296,7 @@ fn update_level(
             level_index.0,
             &mut bread_count,
             &mut events,
+            &mut events_1,
             false,
         );
     }
@@ -411,6 +435,7 @@ fn spawn_sprites(
     bread_count: &mut ResMut<BreadCount>,
     // event
     events: &mut EventWriter<Won>,
+    events_1: &mut EventWriter<UpdateBreadSum>,
     // when updates, do not respawn ducks
     should_respawn_duck: bool,
 ) {
@@ -561,6 +586,7 @@ fn spawn_sprites(
     if bread_count.0 == 0 {
         events.send(Won);
     }
+    events_1.send(UpdateBreadSum);
 }
 
 #[allow(dead_code)]
@@ -593,8 +619,10 @@ fn level_restart(
     level_index: Res<CurrentLevelIndex>,
     levels: Res<Levels>,
     level_stack: ResMut<LevelStack>,
+    bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     events: EventWriter<Won>,
+    events_1: EventWriter<UpdateBreadSum>,
 ) {
     if input.just_pressed(KeyCode::R) {
         // Despawn level elements
@@ -613,7 +641,9 @@ fn level_restart(
             total_bread_count,
             levels,
             level_stack,
+            bread_sum_record_stack,
             events,
+            events_1,
         );
     }
 }
@@ -629,8 +659,10 @@ fn load_other_level(
     total_bread_count: ResMut<TotalBreadCount>,
     levels: Res<Levels>,
     level_stack: ResMut<LevelStack>,
+    bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     events: EventWriter<Won>,
+    events_1: EventWriter<UpdateBreadSum>,
 ) {
     if level_index.is_changed() {
         // clear the scene
@@ -645,7 +677,9 @@ fn load_other_level(
             total_bread_count,
             levels,
             level_stack,
+            bread_sum_record_stack,
             events,
+            events_1,
         )
     }
 }
@@ -675,17 +709,21 @@ fn undo_the_level(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
     mut level_stack: ResMut<LevelStack>,
+    mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     asset_server: Res<AssetServer>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut level: ResMut<Level>,
     mut events: EventWriter<Won>,
+    mut events_1: EventWriter<UpdateBreadSum>,
     object_query: Query<Entity, With<Object>>,
 ) {
     if input.just_pressed(KeyCode::Z) && level_stack.0.size() >= 2 {
         level_stack.0.pop();
-        let origin_level = level_stack.0.peek().unwrap().clone();
-        level.0 = origin_level;
+        level.0 = level_stack.0.peek().unwrap().clone();
+        if bread_sum_record_stack.0.size() >= 1 {
+            bread_sum_record_stack.0.pop();
+        }
         for object in &object_query {
             commands.entity(object).despawn();
         }
@@ -696,6 +734,7 @@ fn undo_the_level(
             level_index.0,
             &mut bread_count,
             &mut events,
+            &mut events_1,
             true,
         );
     }
@@ -718,4 +757,28 @@ pub fn get_entity_on_logic_position(
         }
     }
     None
+}
+
+#[derive(Event, Default)]
+pub struct UpdateBreadSum;
+
+// Update the bread sum after undo
+fn update_bread_sum_of_g_ducks(
+    bread_sum_record_stack: Res<BreadSumRecordStack>,
+    mut g_duck_query: Query<&mut GluttonousDuck, With<GluttonousDuck>>,
+    mut events: EventReader<UpdateBreadSum>,
+) {
+    for _ in events.read() {
+        if bread_sum_record_stack.0.size() > 0 {
+            let record = bread_sum_record_stack.0.peek().unwrap();
+            for mut g_duck in g_duck_query.iter_mut() {
+                for r in record {
+                    if r.0 == g_duck.get_logic_position() {
+                        g_duck.update_bread_sum(r.1);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }

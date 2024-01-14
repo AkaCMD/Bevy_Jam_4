@@ -150,6 +150,12 @@ impl Duck for GluttonousDuck {
     }
 }
 
+impl GluttonousDuck {
+    pub fn update_bread_sum(&mut self, new_bread_sum: u32) {
+        self.bread_sum = new_bread_sum;
+    }
+}
+
 // the chosen duck
 #[derive(Component)]
 pub struct Player;
