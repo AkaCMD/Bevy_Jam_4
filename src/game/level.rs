@@ -167,6 +167,7 @@ pub enum ObjectType {
     DuckOnBreakingIce,
     StuffedGluttonousDuck,
     GluttonousDuck,
+    GluttonousDuckOnBreakingIce,
 }
 
 // Symbols
@@ -184,6 +185,7 @@ impl ObjectType {
             ObjectType::DuckOnBreakingIce => 'O',
             ObjectType::StuffedGluttonousDuck => 'G',
             ObjectType::GluttonousDuck => 'g',
+            ObjectType::GluttonousDuckOnBreakingIce => '&',
         }
     }
 }
@@ -456,6 +458,7 @@ fn spawn_sprites(
                 'Q' => ObjectType::StuffedDuckOnIce,
                 'G' => ObjectType::StuffedGluttonousDuck,
                 'g' => ObjectType::GluttonousDuck,
+                '&' => ObjectType::GluttonousDuckOnBreakingIce,
                 _ => continue,
             };
 
@@ -577,6 +580,27 @@ fn spawn_sprites(
                             (row_index, col_index),
                             true,
                         );
+                    }
+                }
+                ObjectType::GluttonousDuckOnBreakingIce => {
+                    spawn_object(
+                        commands,
+                        position,
+                        asset_server.load("sprites/breaking_ice.png"),
+                    );
+                    if should_respawn_duck {
+                        spawn_g_duck(
+                            commands,
+                            position
+                                + Vec3 {
+                                    x: SPRITE_SIZE / 2.,
+                                    y: -SPRITE_SIZE / 2.,
+                                    z: 0.,
+                                },
+                            asset_server.load("sprites/g_duck.png"),
+                            (row_index, col_index),
+                            true,
+                        )
                     }
                 }
             };

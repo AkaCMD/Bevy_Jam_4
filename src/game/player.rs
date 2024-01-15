@@ -548,13 +548,13 @@ fn g_slip(
         GluttonousDuck.get_symbol()
     };
 
-    if level.0[logic_position.0][logic_position.1] == DuckOnBreakingIce.get_symbol() {
+    if level.0[logic_position.0][logic_position.1] == GluttonousDuckOnBreakingIce.get_symbol() {
         level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
     } else {
         level.0[logic_position.0][logic_position.1] = Ice.get_symbol();
     }
     if level.0[position.0][position.1] == BreakingIce.get_symbol() {
-        level.0[position.0][position.1] = DuckOnBreakingIce.get_symbol();
+        level.0[position.0][position.1] = GluttonousDuckOnBreakingIce.get_symbol();
     } else {
         level.0[position.0][position.1] = duck_char;
     }
@@ -613,10 +613,12 @@ fn eat_bread_or_break_ice(
         let (x, y) = pos;
         if level[x][y] == BreadOnIce.get_symbol() {
             duck.eat_bread();
-            info!("吃饭，爽！");
             has_eaten = true;
         }
         if level[x][y] == BreakingIce.get_symbol() {
+            break_ice_cnt += 1;
+        }
+        if level[x][y] == GluttonousDuckOnBreakingIce.get_symbol() {
             break_ice_cnt += 1;
         }
     }
