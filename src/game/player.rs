@@ -548,7 +548,10 @@ fn g_slip(
         GluttonousDuck.get_symbol()
     };
 
-    if level.0[logic_position.0][logic_position.1] == GluttonousDuckOnBreakingIce.get_symbol() {
+    if level.0[logic_position.0][logic_position.1] == GluttonousDuckOnBreakingIce.get_symbol()
+        || level.0[logic_position.0][logic_position.1]
+            == StuffedGluttonousDuckOnBreakingIce.get_symbol()
+    {
         level.0[logic_position.0][logic_position.1] = BreakingIce.get_symbol();
     } else {
         level.0[logic_position.0][logic_position.1] = Ice.get_symbol();
