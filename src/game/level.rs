@@ -69,7 +69,8 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level12.txt",
             "..\\..\\assets\\levels\\level13.txt",
             "..\\..\\assets\\levels\\level14.txt",
-            "..\\..\\assets\\levels\\level15.txt"
+            "..\\..\\assets\\levels\\level15.txt",
+            "..\\..\\assets\\levels\\level16.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -88,7 +89,8 @@ impl Default for Levels {
             "../../assets/levels/level12.txt",
             "../../assets/levels/level13.txt",
             "../../assets/levels/level14.txt",
-            "../../assets/levels/level15.txt"
+            "../../assets/levels/level15.txt",
+            "../../assets/levels/level16.txt"
         );
 
         Self { levels }
@@ -168,6 +170,7 @@ pub enum ObjectType {
     StuffedGluttonousDuck,
     GluttonousDuck,
     GluttonousDuckOnBreakingIce,
+    StuffedGluttonousDuckOnBreakingIce,
 }
 
 // Symbols
@@ -186,6 +189,7 @@ impl ObjectType {
             ObjectType::StuffedGluttonousDuck => 'G',
             ObjectType::GluttonousDuck => 'g',
             ObjectType::GluttonousDuckOnBreakingIce => '&',
+            ObjectType::StuffedGluttonousDuckOnBreakingIce => '$',
         }
     }
 }
@@ -334,6 +338,13 @@ pub fn spawn_upper_object(commands: &mut Commands, position: Vec3, sprite: Handl
     ));
 }
 
+#[derive(Bundle)]
+struct DuckBundle {
+    sprite: SpriteBundle,
+    marker: CommonDuck,
+    obj: Object,
+}
+
 fn spawn_duck(
     commands: &mut Commands,
     position: Vec3,
@@ -344,8 +355,8 @@ fn spawn_duck(
     is_stuffed: bool,
     can_move: bool,
 ) {
-    commands.spawn((
-        SpriteBundle {
+    commands.spawn(DuckBundle {
+        sprite: SpriteBundle {
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 1.0),
                 rotation: Quat::IDENTITY,
@@ -354,15 +365,15 @@ fn spawn_duck(
             texture: sprite,
             ..default()
         },
-        CommonDuck {
+        marker: CommonDuck {
             logic_position,
             is_stuffed,
             can_move,
             bread_sum: if is_stuffed { 1 } else { 0 },
             belly_capacity: 1,
         },
-        Object,
-    ));
+        obj: Object,
+    });
     // Show click hint
     if level_index == 1 {
         spawn_upper_object(
@@ -373,6 +384,13 @@ fn spawn_duck(
     }
 }
 
+#[derive(Bundle)]
+struct GDuckBundle {
+    sprite: SpriteBundle,
+    marker: GluttonousDuck,
+    obj: Object,
+}
+
 fn spawn_stuffed_g_duck(
     commands: &mut Commands,
     position: Vec3,
@@ -380,8 +398,8 @@ fn spawn_stuffed_g_duck(
     logic_position: (usize, usize),
     can_move: bool,
 ) {
-    commands.spawn((
-        SpriteBundle {
+    commands.spawn(GDuckBundle {
+        sprite: SpriteBundle {
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 1.0),
                 rotation: Quat::IDENTITY,
@@ -390,15 +408,15 @@ fn spawn_stuffed_g_duck(
             texture: sprite,
             ..default()
         },
-        GluttonousDuck {
+        marker: GluttonousDuck {
             logic_position,
             bread_sum: 4,
             is_stuffed: true,
             can_move,
             belly_capacity: 4,
         },
-        Object,
-    ));
+        obj: Object,
+    });
 }
 
 fn spawn_g_duck(
@@ -408,8 +426,8 @@ fn spawn_g_duck(
     logic_position: (usize, usize),
     can_move: bool,
 ) {
-    commands.spawn((
-        SpriteBundle {
+    commands.spawn(GDuckBundle {
+        sprite: SpriteBundle {
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 1.0),
                 rotation: Quat::IDENTITY,
@@ -418,15 +436,15 @@ fn spawn_g_duck(
             texture: sprite,
             ..default()
         },
-        GluttonousDuck {
+        marker: GluttonousDuck {
             logic_position,
             bread_sum: 0,
             is_stuffed: false,
             can_move,
             belly_capacity: 4,
         },
-        Object,
-    ));
+        obj: Object,
+    });
 }
 
 fn spawn_sprites(
@@ -459,6 +477,7 @@ fn spawn_sprites(
                 'G' => ObjectType::StuffedGluttonousDuck,
                 'g' => ObjectType::GluttonousDuck,
                 '&' => ObjectType::GluttonousDuckOnBreakingIce,
+                '$' => ObjectType::StuffedGluttonousDuckOnBreakingIce,
                 _ => continue,
             };
 
@@ -598,6 +617,27 @@ fn spawn_sprites(
                                     z: 0.,
                                 },
                             asset_server.load("sprites/g_duck.png"),
+                            (row_index, col_index),
+                            true,
+                        )
+                    }
+                }
+                ObjectType::StuffedGluttonousDuckOnBreakingIce => {
+                    spawn_object(
+                        commands,
+                        position,
+                        asset_server.load("sprites/breaking_ice.png"),
+                    );
+                    if should_respawn_duck {
+                        spawn_g_duck(
+                            commands,
+                            position
+                                + Vec3 {
+                                    x: SPRITE_SIZE / 2.,
+                                    y: -SPRITE_SIZE / 2.,
+                                    z: 0.,
+                                },
+                            asset_server.load("sprites/g_duck_stuffed.png"),
                             (row_index, col_index),
                             true,
                         )

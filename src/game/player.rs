@@ -555,6 +555,9 @@ fn g_slip(
     }
     if level.0[position.0][position.1] == BreakingIce.get_symbol() {
         level.0[position.0][position.1] = GluttonousDuckOnBreakingIce.get_symbol();
+        if duck.is_stuffed() {
+            level.0[position.0][position.1] = StuffedGluttonousDuckOnBreakingIce.get_symbol();
+        }
     } else {
         level.0[position.0][position.1] = duck_char;
     }

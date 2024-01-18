@@ -1,5 +1,7 @@
 use bevy::window::PrimaryWindow;
 
+use self::level::Levels;
+
 use super::{
     cursor::click_detection,
     level::{BreadCount, CurrentLevelIndex, TotalBreadCount},
@@ -188,6 +190,7 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextSection::new("[ ] ", text_style_important.clone()),
         TextSection::new("to skip levels\n\n", text_style_normal.clone()),
         TextSection::new("One duck, one bread\n", text_style_important.clone()),
+        TextSection::new("Bigger duck, more bread", text_style_important.clone()),
     ])
     .with_text_alignment(TextAlignment::Right)
     .with_style(Style {
@@ -244,6 +247,7 @@ fn won(
     mut events: EventReader<Won>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     level_index: Res<CurrentLevelIndex>,
+    levels: Res<Levels>,
 ) {
     for _ in events.read() {
         let window = window_query.get_single().unwrap();
@@ -267,8 +271,7 @@ fn won(
         ));
 
         let mut button_text = "Next Level";
-        if level_index.0 == 13 {
-            // TODO: hardcoded, change it later
+        if level_index.0 == levels.levels.len() {
             button_text = "The End?";
         }
 

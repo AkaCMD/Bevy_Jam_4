@@ -15,7 +15,7 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
-const DISTANCE: f32 = (640.0 / 2.0 + 10.0) * RESIZE;
+const DISTANCE: f32 = (640.0 / 2.0 + 5.0) * RESIZE;
 
 #[derive(Component)]
 pub struct ArrowHint;
@@ -77,16 +77,16 @@ fn get_cursor_position(
         for g_duck in g_duck_query.iter() {
             let duck_position_v3 = logic_position_to_translation(g_duck.logic_position);
             let duck_position: Vec2 = Vec2 {
-                x: duck_position_v3.x,
-                y: duck_position_v3.y,
+                x: duck_position_v3.x + SPRITE_SIZE / 2.0,
+                y: duck_position_v3.y - SPRITE_SIZE / 2.0,
             };
             if (cursor_position.0 - duck_position).length() < DISTANCE * 2. {
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform {
                             translation: Vec3::new(
-                                duck_position.x + SPRITE_SIZE / 2.,
-                                duck_position.y + SPRITE_SIZE,
+                                duck_position.x,
+                                duck_position.y + SPRITE_SIZE * 1.5,
                                 2.0,
                             ),
                             rotation: Quat::IDENTITY,
@@ -156,8 +156,8 @@ pub fn click_detection(
             for (g_duck, entity) in g_duck_query.iter() {
                 let duck_position_v3 = logic_position_to_translation(g_duck.logic_position);
                 let duck_position: Vec2 = Vec2 {
-                    x: duck_position_v3.x,
-                    y: duck_position_v3.y,
+                    x: duck_position_v3.x + SPRITE_SIZE / 2.0,
+                    y: duck_position_v3.y - SPRITE_SIZE / 2.0,
                 };
                 if (cursor_position.0 - duck_position).length() < DISTANCE * 2. {
                     //info!("You are the chosen one!");
