@@ -12,7 +12,7 @@ Game made for Bevy Jam 4 🦀 in 9 days
 
 - **Mouse click**: choose the duck to slide
 - **WASD/Arrow Keys**: move the chosen duck
-- **R**: reset the levelc
+- **R**: reset the level
 - **Z**: undo
 - **[ ]**: skip levels
 
