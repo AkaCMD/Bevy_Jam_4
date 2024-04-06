@@ -24,7 +24,7 @@ fn play_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
         // source: asset_server.load("audio/Doc.ogg"),
         settings: PlaybackSettings {
             mode: PlaybackMode::Loop,
-            volume: Volume::new_absolute(0.03),
+            volume: Volume::new(0.03),
             ..default()
         },
     });

@@ -50,7 +50,7 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
                 color: MY_ORANGE,
             },
         )
-        .with_text_alignment(TextAlignment::Right)
+        .with_text_justify(JustifyText::Right)
         .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
@@ -69,7 +69,7 @@ fn show_title_and_name(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
         )
-        .with_text_alignment(TextAlignment::Right)
+        .with_text_justify(JustifyText::Right)
         .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(50.0),
@@ -103,7 +103,7 @@ fn show_stuffed_ducks_count(
                 ..default()
             },
         )
-        .with_text_alignment(TextAlignment::Center)
+        .with_text_justify(JustifyText::Center)
         .with_style(Style {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
@@ -150,7 +150,7 @@ fn show_level_title(
                 ..default()
             },
         )
-        .with_text_alignment(TextAlignment::Center)
+        .with_text_justify(JustifyText::Center)
         .with_style(Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
@@ -192,7 +192,7 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextSection::new("One duck, one bread\n", text_style_important.clone()),
         TextSection::new("Bigger duck, more bread", text_style_important.clone()),
     ])
-    .with_text_alignment(TextAlignment::Right)
+    .with_text_justify(JustifyText::Right)
     .with_style(Style {
         position_type: PositionType::Absolute,
         top: Val::Px(10.0),
@@ -260,7 +260,7 @@ fn won(
                     color: MY_ORANGE,
                 },
             )
-            .with_text_alignment(TextAlignment::Center)
+            .with_text_justify(JustifyText::Center)
             .with_style(Style {
                 position_type: PositionType::Absolute,
                 top: Val::Px(40.0),

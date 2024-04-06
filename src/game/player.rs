@@ -184,7 +184,7 @@ fn player_movement(
     mut event_shake: EventWriter<ShakeOtherDucksInDir>,
     mut events_print: EventWriter<level::PrintLevel>,
     // resource
-    key_board_input: Res<Input<KeyCode>>,
+    key_board_input: Res<ButtonInput<KeyCode>>,
     level: ResMut<level::Level>,
     asset_server: Res<AssetServer>,
 ) {
@@ -204,19 +204,19 @@ fn player_movement(
         }
         let mut direction = utils::Direction::None;
 
-        if key_board_input.just_pressed(KeyCode::Left) || key_board_input.just_pressed(KeyCode::A) {
+        if key_board_input.just_pressed(KeyCode::ArrowLeft) || key_board_input.just_pressed(KeyCode::KeyA) {
             direction = utils::Direction::Left;
             sprite.flip_x = false;
         }
-        if key_board_input.just_pressed(KeyCode::Right) || key_board_input.just_pressed(KeyCode::D)
+        if key_board_input.just_pressed(KeyCode::ArrowRight) || key_board_input.just_pressed(KeyCode::KeyD)
         {
             direction = utils::Direction::Right;
             sprite.flip_x = true;
         }
-        if key_board_input.just_pressed(KeyCode::Up) || key_board_input.just_pressed(KeyCode::W) {
+        if key_board_input.just_pressed(KeyCode::ArrowUp) || key_board_input.just_pressed(KeyCode::KeyW) {
             direction = utils::Direction::Up;
         }
-        if key_board_input.just_pressed(KeyCode::Down) || key_board_input.just_pressed(KeyCode::S) {
+        if key_board_input.just_pressed(KeyCode::ArrowDown) || key_board_input.just_pressed(KeyCode::KeyS) {
             direction = utils::Direction::Down;
         }
         if direction != utils::Direction::None {
@@ -237,7 +237,7 @@ fn player_movement(
                 // play eat sound
                 events_sfx.send(PlaySFX {
                     path: "audio/eat.ogg".to_string(),
-                    volume: bevy::audio::Volume::new_absolute(0.2),
+                    volume: bevy::audio::Volume::new(0.2),
                 });
             }
 
@@ -253,7 +253,7 @@ fn player_movement(
                 // play ice breaking sound
                 events_sfx.send(PlaySFX {
                     path: "audio/ice_breaking.ogg".to_string(),
-                    volume: bevy::audio::Volume::new_absolute(0.4),
+                    volume: bevy::audio::Volume::new(0.4),
                 });
             }
 
@@ -309,7 +309,7 @@ fn player_movement(
             // play quark sound
             events_sfx.send(PlaySFX {
                 path: "audio/quark.ogg".to_string(),
-                volume: bevy::audio::Volume::new_absolute(0.5),
+                volume: bevy::audio::Volume::new(0.5),
             });
             events_print.send(level::PrintLevel);
             events_update.send(UpdateLevel);

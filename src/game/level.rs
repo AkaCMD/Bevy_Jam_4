@@ -676,7 +676,7 @@ fn level_restart(
     object_query: Query<Entity, With<Object>>,
     ui_query: Query<Entity, With<ui::MutUI>>,
     // resource
-    input: Res<Input<KeyCode>>,
+    input: Res<ButtonInput<KeyCode>>,
     asset_server: Res<AssetServer>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
@@ -688,7 +688,7 @@ fn level_restart(
     events: EventWriter<Won>,
     events_1: EventWriter<UpdateBreadSum>,
 ) {
-    if input.just_pressed(KeyCode::R) {
+    if input.just_pressed(KeyCode::KeyR) {
         // Despawn level elements
         for object in &object_query {
             commands.entity(object).despawn();
@@ -750,7 +750,7 @@ fn load_other_level(
 
 // Cheat codes for skipping levels
 fn change_level_cheats(
-    input: Res<Input<KeyCode>>,
+    input: Res<ButtonInput<KeyCode>>,
     levels: Res<Levels>,
     mut level_index: ResMut<CurrentLevelIndex>,
 ) {
@@ -771,7 +771,7 @@ fn change_level_cheats(
 // Undo
 fn undo_the_level(
     mut commands: Commands,
-    input: Res<Input<KeyCode>>,
+    input: Res<ButtonInput<KeyCode>>,
     mut level_stack: ResMut<LevelStack>,
     mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     asset_server: Res<AssetServer>,
@@ -782,7 +782,7 @@ fn undo_the_level(
     mut events_1: EventWriter<UpdateBreadSum>,
     object_query: Query<Entity, With<Object>>,
 ) {
-    if input.just_pressed(KeyCode::Z) && level_stack.0.size() >= 2 {
+    if input.just_pressed(KeyCode::KeyZ) && level_stack.0.size() >= 2 {
         level_stack.0.pop();
         level.0 = level_stack.0.peek().unwrap().clone();
         if bread_sum_record_stack.0.size() >= 1 {
