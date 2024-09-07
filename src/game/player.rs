@@ -160,9 +160,6 @@ impl GluttonousDuck {
 #[derive(Component)]
 pub struct Player;
 
-#[derive(Event, Default)]
-pub struct SpawnDuck(pub (usize, usize));
-
 fn player_movement(
     mut commands: Commands,
     // query
@@ -204,19 +201,26 @@ fn player_movement(
         }
         let mut direction = utils::Direction::None;
 
-        if key_board_input.just_pressed(KeyCode::ArrowLeft) || key_board_input.just_pressed(KeyCode::KeyA) {
+        if key_board_input.just_pressed(KeyCode::ArrowLeft)
+            || key_board_input.just_pressed(KeyCode::KeyA)
+        {
             direction = utils::Direction::Left;
             sprite.flip_x = false;
         }
-        if key_board_input.just_pressed(KeyCode::ArrowRight) || key_board_input.just_pressed(KeyCode::KeyD)
+        if key_board_input.just_pressed(KeyCode::ArrowRight)
+            || key_board_input.just_pressed(KeyCode::KeyD)
         {
             direction = utils::Direction::Right;
             sprite.flip_x = true;
         }
-        if key_board_input.just_pressed(KeyCode::ArrowUp) || key_board_input.just_pressed(KeyCode::KeyW) {
+        if key_board_input.just_pressed(KeyCode::ArrowUp)
+            || key_board_input.just_pressed(KeyCode::KeyW)
+        {
             direction = utils::Direction::Up;
         }
-        if key_board_input.just_pressed(KeyCode::ArrowDown) || key_board_input.just_pressed(KeyCode::KeyS) {
+        if key_board_input.just_pressed(KeyCode::ArrowDown)
+            || key_board_input.just_pressed(KeyCode::KeyS)
+        {
             direction = utils::Direction::Down;
         }
         if direction != utils::Direction::None {

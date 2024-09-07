@@ -221,8 +221,8 @@ fn update_level_title(
 
 const NORMAL_BUTTON: Color = MY_ORANGE;
 const HOVERED_BUTTON: Color =
-    Color::rgb(222.0 / 255.0 + 0.1, 112.0 / 255.0 + 0.1, 40.0 / 255.0 + 0.1);
-const PRESSED_BUTTON: Color = Color::rgb(0.75, 0.75, 0.75);
+    Color::srgb(222.0 / 255.0 + 0.1, 112.0 / 255.0 + 0.1, 40.0 / 255.0 + 0.1);
+const PRESSED_BUTTON: Color = Color::srgb(0.75, 0.75, 0.75);
 
 #[derive(Event, Default)]
 pub struct Won;

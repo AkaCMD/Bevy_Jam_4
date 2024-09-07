@@ -10,7 +10,6 @@ mod game;
 
 fn main() {
     App::new()
-        .insert_resource(AssetMetaCheck::Never)
         .insert_resource(ClearColor(game::LIGHT_MODE_BG_COLOR))
         .add_plugins(
             DefaultPlugins
@@ -25,7 +24,11 @@ fn main() {
                     }),
                     ..default()
                 })
-                .set(ImagePlugin::default_nearest()), // All textures are pixelated
+                .set(ImagePlugin::default_nearest()) // All textures are pixelated
+                .set(AssetPlugin { // Fix web load assets issue
+                    meta_check: AssetMetaCheck::Never,
+                    ..Default::default()
+                }),
         )
         .add_plugins(game::Plugin)
         .add_plugins(TweeningPlugin)

@@ -4,7 +4,6 @@ use super::{
     ui::Won,
     *,
 };
-use bevy::utils::thiserror;
 use thiserror::Error;
 
 pub struct Plugin;
