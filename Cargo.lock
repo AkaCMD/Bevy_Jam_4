@@ -3308,6 +3308,7 @@ dependencies = [
  "bevy_tweening",
  "bevy_wasm_window_resize",
  "embed-resource",
+ "lazy_static",
  "thiserror",
  "wasm-bindgen",
 ]

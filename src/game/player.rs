@@ -1,6 +1,6 @@
 use super::{
     audio::PlaySFX,
-    level::{get_entity_on_logic_position, ObjectType::*, UpdateLevel},
+    level::{get_entity_on_logic_position, SymbolType::*, UpdateLevel},
     *,
 };
 use bevy::utils::Duration;

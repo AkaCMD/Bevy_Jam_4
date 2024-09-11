@@ -25,7 +25,8 @@ fn main() {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()) // All textures are pixelated
-                .set(AssetPlugin { // Fix web load assets issue
+                .set(AssetPlugin {
+                    // Fix web load assets issue
                     meta_check: AssetMetaCheck::Never,
                     ..Default::default()
                 }),

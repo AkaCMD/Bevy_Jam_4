@@ -4,6 +4,8 @@ use super::{
     ui::Won,
     *,
 };
+use bevy::utils::HashMap;
+use lazy_static::lazy_static;
 use thiserror::Error;
 
 pub struct Plugin;
@@ -156,7 +158,7 @@ impl Default for BreadCount {
     }
 }
 // TODO: Layers of objects (z axis)
-pub enum ObjectType {
+pub enum SymbolType {
     Wall,
     Ice,
     BrokenIce,
@@ -172,23 +174,61 @@ pub enum ObjectType {
     StuffedGluttonousDuckOnBreakingIce,
 }
 
+pub enum ObjectType {
+    Wall,
+    Ice,
+    BrokenIce,
+    BreakingIce,
+    Duck,
+    StuffedDuck,
+    Bread,
+    GluttonousDuck,
+    StuffedGluttonousDuck,
+}
+
+lazy_static! {
+    static ref LAYER_MAP: HashMap<u32, Vec<ObjectType>> = {
+        let mut m = HashMap::new();
+        m.insert(
+            0,
+            vec![
+                ObjectType::Ice,
+                ObjectType::BrokenIce,
+                ObjectType::BreakingIce,
+            ],
+        );
+        m.insert(
+            1,
+            vec![
+                ObjectType::Wall,
+                ObjectType::Bread,
+                ObjectType::Duck,
+                ObjectType::StuffedDuck,
+                ObjectType::GluttonousDuck,
+                ObjectType::StuffedGluttonousDuck,
+            ],
+        );
+        m
+    };
+}
+
 // Symbols
-impl ObjectType {
+impl SymbolType {
     pub fn get_symbol(self) -> char {
         match self {
-            ObjectType::Wall => '@',
-            ObjectType::Ice => '#',
-            ObjectType::BrokenIce => '^',
-            ObjectType::DuckOnIce => 'D',
-            ObjectType::StuffedDuckOnIce => 'Q',
-            ObjectType::BreadOnIce => 'B',
-            ObjectType::BreakingIce => '*',
-            ObjectType::DuckOnWater => 'P',
-            ObjectType::DuckOnBreakingIce => 'O',
-            ObjectType::StuffedGluttonousDuck => 'G',
-            ObjectType::GluttonousDuck => 'g',
-            ObjectType::GluttonousDuckOnBreakingIce => '&',
-            ObjectType::StuffedGluttonousDuckOnBreakingIce => '$',
+            SymbolType::Wall => '@',
+            SymbolType::Ice => '#',
+            SymbolType::BrokenIce => '^',
+            SymbolType::DuckOnIce => 'D',
+            SymbolType::StuffedDuckOnIce => 'Q',
+            SymbolType::BreadOnIce => 'B',
+            SymbolType::BreakingIce => '*',
+            SymbolType::DuckOnWater => 'P',
+            SymbolType::DuckOnBreakingIce => 'O',
+            SymbolType::StuffedGluttonousDuck => 'G',
+            SymbolType::GluttonousDuck => 'g',
+            SymbolType::GluttonousDuckOnBreakingIce => '&',
+            SymbolType::StuffedGluttonousDuckOnBreakingIce => '$',
         }
     }
 }
@@ -464,33 +504,33 @@ fn spawn_sprites(
         for (col_index, &ch) in row.iter().enumerate() {
             let position = logic_position_to_translation((row_index, col_index));
             let object_type = match ch {
-                '@' => ObjectType::Wall,
-                '#' => ObjectType::Ice,
-                '^' => ObjectType::BrokenIce,
-                'D' => ObjectType::DuckOnIce,
-                'B' => ObjectType::BreadOnIce,
-                '*' => ObjectType::BreakingIce,
-                'P' => ObjectType::DuckOnWater,
-                'O' => ObjectType::DuckOnBreakingIce,
-                'Q' => ObjectType::StuffedDuckOnIce,
-                'G' => ObjectType::StuffedGluttonousDuck,
-                'g' => ObjectType::GluttonousDuck,
-                '&' => ObjectType::GluttonousDuckOnBreakingIce,
-                '$' => ObjectType::StuffedGluttonousDuckOnBreakingIce,
+                '@' => SymbolType::Wall,
+                '#' => SymbolType::Ice,
+                '^' => SymbolType::BrokenIce,
+                'D' => SymbolType::DuckOnIce,
+                'B' => SymbolType::BreadOnIce,
+                '*' => SymbolType::BreakingIce,
+                'P' => SymbolType::DuckOnWater,
+                'O' => SymbolType::DuckOnBreakingIce,
+                'Q' => SymbolType::StuffedDuckOnIce,
+                'G' => SymbolType::StuffedGluttonousDuck,
+                'g' => SymbolType::GluttonousDuck,
+                '&' => SymbolType::GluttonousDuckOnBreakingIce,
+                '$' => SymbolType::StuffedGluttonousDuckOnBreakingIce,
                 _ => continue,
             };
 
             match object_type {
-                ObjectType::Wall => {
+                SymbolType::Wall => {
                     spawn_object(commands, position, asset_server.load("sprites/wall.png"));
                 }
-                ObjectType::Ice => {
+                SymbolType::Ice => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                 }
-                ObjectType::BrokenIce => {
+                SymbolType::BrokenIce => {
                     spawn_object(commands, position, asset_server.load("sprites/water.png"));
                 }
-                ObjectType::DuckOnIce => {
+                SymbolType::DuckOnIce => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     if should_respawn_duck {
                         spawn_duck(
@@ -505,7 +545,7 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::StuffedDuckOnIce => {
+                SymbolType::StuffedDuckOnIce => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     if should_respawn_duck {
                         spawn_duck(
@@ -520,19 +560,19 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::BreadOnIce => {
+                SymbolType::BreadOnIce => {
                     bread_count.0 += 1;
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     spawn_upper_object(commands, position, asset_server.load("sprites/bread.png"));
                 }
-                ObjectType::BreakingIce => {
+                SymbolType::BreakingIce => {
                     spawn_object(
                         commands,
                         position,
                         asset_server.load("sprites/breaking_ice.png"),
                     );
                 }
-                ObjectType::DuckOnWater => {
+                SymbolType::DuckOnWater => {
                     spawn_object(commands, position, asset_server.load("sprites/water.png"));
                     if should_respawn_duck {
                         spawn_duck(
@@ -547,7 +587,7 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::DuckOnBreakingIce => {
+                SymbolType::DuckOnBreakingIce => {
                     spawn_object(
                         commands,
                         position,
@@ -566,7 +606,7 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::StuffedGluttonousDuck => {
+                SymbolType::StuffedGluttonousDuck => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     if should_respawn_duck {
                         spawn_stuffed_g_duck(
@@ -583,7 +623,7 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::GluttonousDuck => {
+                SymbolType::GluttonousDuck => {
                     spawn_object(commands, position, asset_server.load("sprites/ice.png"));
                     if should_respawn_duck {
                         spawn_g_duck(
@@ -600,7 +640,7 @@ fn spawn_sprites(
                         );
                     }
                 }
-                ObjectType::GluttonousDuckOnBreakingIce => {
+                SymbolType::GluttonousDuckOnBreakingIce => {
                     spawn_object(
                         commands,
                         position,
@@ -621,7 +661,7 @@ fn spawn_sprites(
                         )
                     }
                 }
-                ObjectType::StuffedGluttonousDuckOnBreakingIce => {
+                SymbolType::StuffedGluttonousDuckOnBreakingIce => {
                     spawn_object(
                         commands,
                         position,

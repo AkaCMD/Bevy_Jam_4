@@ -35,7 +35,6 @@ impl bevy::app::Plugin for Plugin {
     }
 }
 
-// TODO: fix the web fullscreen issue
 fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
     let window = window_query.get_single().unwrap();
     let mut my_2d_camera_bundle = Camera2dBundle {

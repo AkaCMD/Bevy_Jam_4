@@ -13,6 +13,7 @@ wasm-bindgen = "0.2.89"
 bevy-inspector-egui = "0.25.2"
 bevy_wasm_window_resize = "0.4.0"
 thiserror = "1.0.63"
+lazy_static = "1.5.0"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
