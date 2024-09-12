@@ -1,7 +1,4 @@
-use super::{
-    player::{CommonDuck, GluttonousDuck},
-    *,
-};
+use super::{player::CommonDuck, *};
 use crate::game::player::Player;
 use bevy::{input::mouse::MouseButtonInput, window::PrimaryWindow};
 
@@ -32,7 +29,6 @@ fn get_cursor_position(
     window_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     duck_query: Query<&CommonDuck, (With<CommonDuck>, Without<Player>)>,
-    g_duck_query: Query<&GluttonousDuck, (With<GluttonousDuck>, Without<Player>)>,
     arrow_query: Query<Entity, (With<ArrowHint>, Without<Parent>)>,
 ) {
     let (camera, camera_transform) = camera_query.single();
@@ -73,33 +69,6 @@ fn get_cursor_position(
                 ));
             }
         }
-
-        for g_duck in g_duck_query.iter() {
-            let duck_position_v3 = logic_position_to_translation(g_duck.logic_position);
-            let duck_position: Vec2 = Vec2 {
-                x: duck_position_v3.x + SPRITE_SIZE / 2.0,
-                y: duck_position_v3.y - SPRITE_SIZE / 2.0,
-            };
-            if (cursor_position.0 - duck_position).length() < DISTANCE * 2. {
-                commands.spawn((
-                    SpriteBundle {
-                        transform: Transform {
-                            translation: Vec3::new(
-                                duck_position.x,
-                                duck_position.y + SPRITE_SIZE * 1.5,
-                                2.0,
-                            ),
-                            rotation: Quat::IDENTITY,
-                            scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
-                        },
-                        texture: asset_server.load("sprites/arrow.png"),
-                        ..default()
-                    },
-                    ArrowHint,
-                    //level::Object,
-                ));
-            }
-        }
     }
 }
 
@@ -109,7 +78,6 @@ pub fn click_detection(
     mut mouse_button_input_events: EventReader<MouseButtonInput>,
     // query
     duck_query: Query<(&CommonDuck, Entity), (With<CommonDuck>, Without<Player>)>,
-    g_duck_query: Query<(&GluttonousDuck, Entity), (With<GluttonousDuck>, Without<Player>)>,
     player_query: Query<Entity, With<Player>>,
     arrow_hint_query: Query<Entity, (With<ArrowHint>, With<Parent>)>,
     // resource
@@ -133,43 +101,6 @@ pub fn click_detection(
                                 SpriteBundle {
                                     transform: Transform {
                                         translation: Vec3::new(0.0, 500.0, 1.0),
-                                        ..default()
-                                    },
-                                    texture: asset_server.load("sprites/arrow.png"),
-                                    ..default()
-                                },
-                                ArrowHint,
-                                level::Object,
-                            ));
-                        });
-                    // Clear the previous player
-                    for entity in player_query.iter() {
-                        commands.entity(entity).remove::<Player>();
-                        commands.entity(entity).clear_children();
-                    }
-                    // Clear the previous arrow hint
-                    for entity in arrow_hint_query.iter() {
-                        commands.entity(entity).despawn();
-                    }
-                }
-            }
-            for (g_duck, entity) in g_duck_query.iter() {
-                let duck_position_v3 = logic_position_to_translation(g_duck.logic_position);
-                let duck_position: Vec2 = Vec2 {
-                    x: duck_position_v3.x + SPRITE_SIZE / 2.0,
-                    y: duck_position_v3.y - SPRITE_SIZE / 2.0,
-                };
-                if (cursor_position.0 - duck_position).length() < DISTANCE * 2. {
-                    //info!("You are the chosen one!");
-                    commands
-                        .entity(entity)
-                        .insert(Player)
-                        .with_children(|parent| {
-                            parent.spawn((
-                                SpriteBundle {
-                                    transform: Transform {
-                                        translation: Vec3::new(0.0, 400.0, 1.0),
-                                        scale: Vec3::new(0.5, 0.5, 1.),
                                         ..default()
                                     },
                                     texture: asset_server.load("sprites/arrow.png"),

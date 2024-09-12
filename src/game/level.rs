@@ -1,11 +1,4 @@
-use super::{
-    cursor::ArrowHint,
-    player::{CommonDuck, Duck, GluttonousDuck},
-    ui::Won,
-    *,
-};
-use bevy::utils::HashMap;
-use lazy_static::lazy_static;
+use super::{cursor::ArrowHint, player::CommonDuck, ui::Won, *};
 use thiserror::Error;
 
 pub struct Plugin;
@@ -22,7 +15,6 @@ impl bevy::app::Plugin for Plugin {
             .init_resource::<BreadSumRecordStack>()
             .add_event::<PrintLevel>()
             .add_event::<UpdateLevel>()
-            .add_event::<UpdateBreadSum>()
             .add_systems(
                 Update,
                 (
@@ -32,7 +24,6 @@ impl bevy::app::Plugin for Plugin {
                     load_other_level,
                     change_level_cheats,
                     undo_the_level,
-                    update_bread_sum_of_g_ducks,
                 ),
             );
     }
@@ -68,10 +59,7 @@ impl Default for Levels {
             "..\\..\\assets\\levels\\level10.txt",
             "..\\..\\assets\\levels\\level11.txt",
             "..\\..\\assets\\levels\\level12.txt",
-            "..\\..\\assets\\levels\\level13.txt",
-            "..\\..\\assets\\levels\\level14.txt",
-            "..\\..\\assets\\levels\\level15.txt",
-            "..\\..\\assets\\levels\\level16.txt"
+            "..\\..\\assets\\levels\\level13.txt"
         );
 
         #[cfg(any(target_os = "linux", target_os = "macos", target_arch = "wasm32"))]
@@ -88,10 +76,7 @@ impl Default for Levels {
             "../../assets/levels/level10.txt",
             "../../assets/levels/level11.txt",
             "../../assets/levels/level12.txt",
-            "../../assets/levels/level13.txt",
-            "../../assets/levels/level14.txt",
-            "../../assets/levels/level15.txt",
-            "../../assets/levels/level16.txt"
+            "../../assets/levels/level13.txt"
         );
 
         Self { levels }
@@ -168,48 +153,6 @@ pub enum SymbolType {
     BreakingIce,
     DuckOnWater,
     DuckOnBreakingIce,
-    StuffedGluttonousDuck,
-    GluttonousDuck,
-    GluttonousDuckOnBreakingIce,
-    StuffedGluttonousDuckOnBreakingIce,
-}
-
-pub enum ObjectType {
-    Wall,
-    Ice,
-    BrokenIce,
-    BreakingIce,
-    Duck,
-    StuffedDuck,
-    Bread,
-    GluttonousDuck,
-    StuffedGluttonousDuck,
-}
-
-lazy_static! {
-    static ref LAYER_MAP: HashMap<u32, Vec<ObjectType>> = {
-        let mut m = HashMap::new();
-        m.insert(
-            0,
-            vec![
-                ObjectType::Ice,
-                ObjectType::BrokenIce,
-                ObjectType::BreakingIce,
-            ],
-        );
-        m.insert(
-            1,
-            vec![
-                ObjectType::Wall,
-                ObjectType::Bread,
-                ObjectType::Duck,
-                ObjectType::StuffedDuck,
-                ObjectType::GluttonousDuck,
-                ObjectType::StuffedGluttonousDuck,
-            ],
-        );
-        m
-    };
 }
 
 // Symbols
@@ -225,10 +168,6 @@ impl SymbolType {
             SymbolType::BreakingIce => '*',
             SymbolType::DuckOnWater => 'P',
             SymbolType::DuckOnBreakingIce => 'O',
-            SymbolType::StuffedGluttonousDuck => 'G',
-            SymbolType::GluttonousDuck => 'g',
-            SymbolType::GluttonousDuckOnBreakingIce => '&',
-            SymbolType::StuffedGluttonousDuckOnBreakingIce => '$',
         }
     }
 }
@@ -273,7 +212,6 @@ fn spawn_level(
     mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     mut events: EventWriter<Won>,
-    mut events_1: EventWriter<UpdateBreadSum>,
 ) {
     // Load the level from a .txt file
     if let Ok(level) = load_level(level_index.0, levels) {
@@ -288,7 +226,6 @@ fn spawn_level(
             level_index.0,
             &mut bread_count,
             &mut events,
-            &mut events_1,
             true,
         );
         level_stack.0.push(level.0.clone());
@@ -302,18 +239,8 @@ fn update_level(
     // event
     mut events_update: EventReader<UpdateLevel>,
     mut events: EventWriter<Won>,
-    mut events_1: EventWriter<UpdateBreadSum>,
     // add the objects that won't be despawn to the filter
-    object_query: Query<
-        Entity,
-        (
-            With<Object>,
-            Without<CommonDuck>,
-            Without<ArrowHint>,
-            Without<GluttonousDuck>,
-        ),
-    >,
-    g_duck_query: Query<&GluttonousDuck, With<GluttonousDuck>>,
+    object_query: Query<Entity, (With<Object>, Without<CommonDuck>, Without<ArrowHint>)>,
     // resource
     asset_server: Res<AssetServer>,
     level: Res<Level>,
@@ -329,10 +256,7 @@ fn update_level(
             commands.entity(object).despawn();
         }
         level_stack.0.push(level.0.clone());
-        let mut record: Vec<((usize, usize), u32)> = vec![];
-        for g_duck in g_duck_query.iter() {
-            record.push((g_duck.get_logic_position(), g_duck.get_bread_sum()));
-        }
+        let record: Vec<((usize, usize), u32)> = vec![];
         bread_sum_record_stack.0.push(record);
         spawn_sprites(
             &mut commands,
@@ -341,7 +265,6 @@ fn update_level(
             level_index.0,
             &mut bread_count,
             &mut events,
-            &mut events_1,
             false,
         );
     }
@@ -406,7 +329,6 @@ fn spawn_duck(
         },
         marker: CommonDuck {
             logic_position,
-            is_stuffed,
             can_move,
             bread_sum: if is_stuffed { 1 } else { 0 },
             belly_capacity: 1,
@@ -423,69 +345,6 @@ fn spawn_duck(
     }
 }
 
-#[derive(Bundle)]
-struct GDuckBundle {
-    sprite: SpriteBundle,
-    marker: GluttonousDuck,
-    obj: Object,
-}
-
-fn spawn_stuffed_g_duck(
-    commands: &mut Commands,
-    position: Vec3,
-    sprite: Handle<Image>,
-    logic_position: (usize, usize),
-    can_move: bool,
-) {
-    commands.spawn(GDuckBundle {
-        sprite: SpriteBundle {
-            transform: Transform {
-                translation: Vec3::new(position.x, position.y, 1.0),
-                rotation: Quat::IDENTITY,
-                scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
-            },
-            texture: sprite,
-            ..default()
-        },
-        marker: GluttonousDuck {
-            logic_position,
-            bread_sum: 4,
-            is_stuffed: true,
-            can_move,
-            belly_capacity: 4,
-        },
-        obj: Object,
-    });
-}
-
-fn spawn_g_duck(
-    commands: &mut Commands,
-    position: Vec3,
-    sprite: Handle<Image>,
-    logic_position: (usize, usize),
-    can_move: bool,
-) {
-    commands.spawn(GDuckBundle {
-        sprite: SpriteBundle {
-            transform: Transform {
-                translation: Vec3::new(position.x, position.y, 1.0),
-                rotation: Quat::IDENTITY,
-                scale: Vec3::new(2.0 * RESIZE, 2.0 * RESIZE, 1.0),
-            },
-            texture: sprite,
-            ..default()
-        },
-        marker: GluttonousDuck {
-            logic_position,
-            bread_sum: 0,
-            is_stuffed: false,
-            can_move,
-            belly_capacity: 4,
-        },
-        obj: Object,
-    });
-}
-
 fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
@@ -494,7 +353,6 @@ fn spawn_sprites(
     bread_count: &mut ResMut<BreadCount>,
     // event
     events: &mut EventWriter<Won>,
-    events_1: &mut EventWriter<UpdateBreadSum>,
     // when updates, do not respawn ducks
     should_respawn_duck: bool,
 ) {
@@ -513,10 +371,6 @@ fn spawn_sprites(
                 'P' => SymbolType::DuckOnWater,
                 'O' => SymbolType::DuckOnBreakingIce,
                 'Q' => SymbolType::StuffedDuckOnIce,
-                'G' => SymbolType::StuffedGluttonousDuck,
-                'g' => SymbolType::GluttonousDuck,
-                '&' => SymbolType::GluttonousDuckOnBreakingIce,
-                '$' => SymbolType::StuffedGluttonousDuckOnBreakingIce,
                 _ => continue,
             };
 
@@ -606,82 +460,6 @@ fn spawn_sprites(
                         );
                     }
                 }
-                SymbolType::StuffedGluttonousDuck => {
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
-                    if should_respawn_duck {
-                        spawn_stuffed_g_duck(
-                            commands,
-                            position
-                                + Vec3 {
-                                    x: SPRITE_SIZE / 2.,
-                                    y: -SPRITE_SIZE / 2.,
-                                    z: 0.,
-                                },
-                            asset_server.load("sprites/g_duck_stuffed.png"),
-                            (row_index, col_index),
-                            true,
-                        );
-                    }
-                }
-                SymbolType::GluttonousDuck => {
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
-                    if should_respawn_duck {
-                        spawn_g_duck(
-                            commands,
-                            position
-                                + Vec3 {
-                                    x: SPRITE_SIZE / 2.,
-                                    y: -SPRITE_SIZE / 2.,
-                                    z: 0.,
-                                },
-                            asset_server.load("sprites/g_duck.png"),
-                            (row_index, col_index),
-                            true,
-                        );
-                    }
-                }
-                SymbolType::GluttonousDuckOnBreakingIce => {
-                    spawn_object(
-                        commands,
-                        position,
-                        asset_server.load("sprites/breaking_ice.png"),
-                    );
-                    if should_respawn_duck {
-                        spawn_g_duck(
-                            commands,
-                            position
-                                + Vec3 {
-                                    x: SPRITE_SIZE / 2.,
-                                    y: -SPRITE_SIZE / 2.,
-                                    z: 0.,
-                                },
-                            asset_server.load("sprites/g_duck.png"),
-                            (row_index, col_index),
-                            true,
-                        )
-                    }
-                }
-                SymbolType::StuffedGluttonousDuckOnBreakingIce => {
-                    spawn_object(
-                        commands,
-                        position,
-                        asset_server.load("sprites/breaking_ice.png"),
-                    );
-                    if should_respawn_duck {
-                        spawn_g_duck(
-                            commands,
-                            position
-                                + Vec3 {
-                                    x: SPRITE_SIZE / 2.,
-                                    y: -SPRITE_SIZE / 2.,
-                                    z: 0.,
-                                },
-                            asset_server.load("sprites/g_duck_stuffed.png"),
-                            (row_index, col_index),
-                            true,
-                        )
-                    }
-                }
             };
         }
     }
@@ -689,7 +467,6 @@ fn spawn_sprites(
     if bread_count.0 == 0 {
         events.send(Won);
     }
-    events_1.send(UpdateBreadSum);
 }
 
 #[allow(dead_code)]
@@ -725,7 +502,6 @@ fn level_restart(
     bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     events: EventWriter<Won>,
-    events_1: EventWriter<UpdateBreadSum>,
 ) {
     if input.just_pressed(KeyCode::KeyR) {
         // Despawn level elements
@@ -746,7 +522,6 @@ fn level_restart(
             level_stack,
             bread_sum_record_stack,
             events,
-            events_1,
         );
     }
 }
@@ -765,7 +540,6 @@ fn load_other_level(
     bread_sum_record_stack: ResMut<BreadSumRecordStack>,
     // event
     events: EventWriter<Won>,
-    events_1: EventWriter<UpdateBreadSum>,
 ) {
     if level_index.is_changed() {
         // clear the scene
@@ -782,7 +556,6 @@ fn load_other_level(
             level_stack,
             bread_sum_record_stack,
             events,
-            events_1,
         )
     }
 }
@@ -818,7 +591,6 @@ fn undo_the_level(
     mut bread_count: ResMut<BreadCount>,
     mut level: ResMut<Level>,
     mut events: EventWriter<Won>,
-    mut events_1: EventWriter<UpdateBreadSum>,
     object_query: Query<Entity, With<Object>>,
 ) {
     if input.just_pressed(KeyCode::KeyZ) && level_stack.0.size() >= 2 {
@@ -837,7 +609,6 @@ fn undo_the_level(
             level_index.0,
             &mut bread_count,
             &mut events,
-            &mut events_1,
             true,
         );
     }
@@ -860,28 +631,4 @@ pub fn get_entity_on_logic_position(
         }
     }
     None
-}
-
-#[derive(Event, Default)]
-pub struct UpdateBreadSum;
-
-// Update the bread sum after undo
-fn update_bread_sum_of_g_ducks(
-    bread_sum_record_stack: Res<BreadSumRecordStack>,
-    mut g_duck_query: Query<&mut GluttonousDuck, With<GluttonousDuck>>,
-    mut events: EventReader<UpdateBreadSum>,
-) {
-    for _ in events.read() {
-        if bread_sum_record_stack.0.size() > 0 {
-            let record = bread_sum_record_stack.0.peek().unwrap();
-            for mut g_duck in g_duck_query.iter_mut() {
-                for r in record {
-                    if r.0 == g_duck.get_logic_position() {
-                        g_duck.update_bread_sum(r.1);
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }
