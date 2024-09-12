@@ -189,8 +189,6 @@ fn show_hints(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextSection::new("to undo\n", text_style_normal.clone()),
         TextSection::new("[ ] ", text_style_important.clone()),
         TextSection::new("to skip levels\n\n", text_style_normal.clone()),
-        TextSection::new("One duck, one bread\n", text_style_important.clone()),
-        TextSection::new("Bigger duck, more bread", text_style_important.clone()),
     ])
     .with_text_justify(JustifyText::Right)
     .with_style(Style {
@@ -253,10 +251,10 @@ fn won(
         let window = window_query.get_single().unwrap();
         commands.spawn((
             TextBundle::from_section(
-                "Win!",
+                "Yummy!",
                 TextStyle {
                     font: asset_server.load("fonts/NotJamChunky8.ttf"),
-                    font_size: 50.0,
+                    font_size: 40.0,
                     color: MY_ORANGE,
                 },
             )
@@ -264,7 +262,7 @@ fn won(
             .with_style(Style {
                 position_type: PositionType::Absolute,
                 top: Val::Px(40.0),
-                right: Val::Px(window.width() / 2.0 - 100.0),
+                right: Val::Px(window.width() / 2.0 - 140.0),
                 ..default()
             }),
             MutUI,

@@ -19,7 +19,6 @@ fn main() {
                         // Bind to canvas included in 'index.html'
                         mode: bevy::window::WindowMode::Windowed,
                         prevent_default_event_handling: true,
-                        resizable: false,
                         ..default()
                     }),
                     ..default()
