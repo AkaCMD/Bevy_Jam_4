@@ -18,7 +18,6 @@ impl bevy::app::Plugin for Plugin {
                 show_level_title,
                 show_hints,
                 show_stuffed_ducks_count,
-                show_dark_mode_button,
             ),
         )
         .add_event::<Won>()
@@ -31,11 +30,9 @@ impl bevy::app::Plugin for Plugin {
                 // It fixes the bug when click the next level button and a duck simsimultaneously
                 // If not doing so, click_detection will try to insert Player bundle to an invalid entity, causes the game to crash
                 next_level_button_interaction.after(click_detection),
-                dark_mode_button_interaction,
                 update_stuffed_ducks_count,
             ),
-        )
-        .init_resource::<DisplayMode>();
+        );
     }
 }
 
@@ -231,14 +228,6 @@ pub struct MutUI;
 #[derive(Component)]
 pub struct NextLevelButton;
 
-#[derive(Component)]
-pub struct DarkModeButton;
-
-#[derive(Resource, Default)]
-pub struct DisplayMode {
-    dark_mode: bool,
-}
-
 fn won(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -341,75 +330,6 @@ fn next_level_button_interaction(
                 *color = PRESSED_BUTTON.into();
                 border_color.0 = Color::WHITE;
                 level_index.0 += 1;
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-                border_color.0 = Color::WHITE;
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-                border_color.0 = MY_BROWN;
-            }
-        }
-    }
-}
-
-// duck mode button
-fn show_dark_mode_button(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn(ButtonBundle {
-            style: Style {
-                width: Val::Px(100.0),
-                height: Val::Px(40.0),
-                border: UiRect::all(Val::Px(5.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                right: Val::Px(10.0),
-                bottom: Val::Px(100.0),
-                position_type: PositionType::Absolute,
-                ..default()
-            },
-            border_color: BorderColor(Color::BLACK),
-            background_color: NORMAL_BUTTON.into(),
-            ..default()
-        })
-        .insert(DarkModeButton)
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "Durk Mode",
-                TextStyle {
-                    font: asset_server.load("fonts/NotJamChunky8.ttf"),
-                    font_size: 15.0,
-                    color: Color::WHITE,
-                },
-            ));
-        });
-}
-
-fn dark_mode_button_interaction(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &mut BorderColor),
-        (Changed<Interaction>, (With<Button>, With<DarkModeButton>)),
-    >,
-    mut clear_color: ResMut<ClearColor>,
-    mut display_mode: ResMut<DisplayMode>,
-) {
-    for (interaction, mut color, mut border_color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = PRESSED_BUTTON.into();
-                border_color.0 = Color::WHITE;
-                match display_mode.dark_mode {
-                    false => {
-                        clear_color.0 = DARK_MODE_BG_COLOR;
-                    }
-                    true => {
-                        clear_color.0 = LIGHT_MODE_BG_COLOR;
-                    }
-                }
-                display_mode.dark_mode = !display_mode.dark_mode;
             }
             Interaction::Hovered => {
                 *color = HOVERED_BUTTON.into();

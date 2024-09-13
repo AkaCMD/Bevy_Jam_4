@@ -17,7 +17,6 @@ pub const SPRITE_SIZE: f32 = 640.0 * RESIZE;
 pub const MY_ORANGE: Color = Color::srgb(222.0 / 255.0, 112.0 / 255.0, 40.0 / 255.0);
 pub const MY_BROWN: Color = Color::srgb(91.0 / 255.0, 75.0 / 255.0, 73.0 / 255.0);
 pub const DARK_MODE_BG_COLOR: Color = Color::srgb(45.0 / 255.0, 47.0 / 255.0, 47.0 / 255.0);
-pub const LIGHT_MODE_BG_COLOR: Color = Color::srgb(200.0 / 255.0, 200.0 / 255.0, 205.0 / 255.0);
 
 pub const DUCK_MOVE_MILI_SECS: u64 = 300;
 

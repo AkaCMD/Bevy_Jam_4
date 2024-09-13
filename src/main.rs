@@ -10,7 +10,7 @@ mod game;
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(game::LIGHT_MODE_BG_COLOR))
+        .insert_resource(ClearColor(game::DARK_MODE_BG_COLOR))
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
