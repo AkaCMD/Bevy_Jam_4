@@ -15,7 +15,8 @@ impl bevy::app::Plugin for Plugin {
                 player_movement,
                 component_animator_system::<Transform>,
                 shake_other_ducks_in_direction,
-            ).run_if(in_state(GameStates::Next)),
+            )
+                .run_if(in_state(GameStates::Next)),
         )
         .add_event::<ShakeOtherDucksInDir>();
     }

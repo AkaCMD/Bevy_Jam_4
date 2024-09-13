@@ -7,7 +7,10 @@ pub struct Plugin;
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPosition>()
-            .add_systems(Update, get_cursor_position.run_if(in_state(GameStates::Next)))
+            .add_systems(
+                Update,
+                get_cursor_position.run_if(in_state(GameStates::Next)),
+            )
             .add_systems(Update, click_detection.run_if(in_state(GameStates::Next)));
     }
 }

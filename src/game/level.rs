@@ -24,7 +24,8 @@ impl bevy::app::Plugin for Plugin {
                     load_other_level,
                     change_level_cheats,
                     undo_the_level,
-                ).run_if(in_state(GameStates::Next)),
+                )
+                    .run_if(in_state(GameStates::Next)),
             );
     }
 }
@@ -420,11 +421,7 @@ fn spawn_sprites(
                     spawn_upper_object(commands, position, image_assets.bread.clone());
                 }
                 SymbolType::BreakingIce => {
-                    spawn_object(
-                        commands,
-                        position,
-                        image_assets.breaking_ice.clone(),
-                    );
+                    spawn_object(commands, position, image_assets.breaking_ice.clone());
                 }
                 SymbolType::DuckOnWater => {
                     spawn_object(commands, position, image_assets.water.clone());
@@ -442,11 +439,7 @@ fn spawn_sprites(
                     }
                 }
                 SymbolType::DuckOnBreakingIce => {
-                    spawn_object(
-                        commands,
-                        position,
-                        image_assets.breaking_ice.clone(),
-                    );
+                    spawn_object(commands, position, image_assets.breaking_ice.clone());
                     if should_respawn_duck {
                         spawn_duck(
                             commands,
