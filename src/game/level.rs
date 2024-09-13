@@ -5,7 +5,7 @@ pub struct Plugin;
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_level)
+        app.add_systems(OnEnter(GameStates::Next), spawn_level)
             .init_resource::<Level>()
             .init_resource::<Levels>()
             .init_resource::<CurrentLevelIndex>()
@@ -24,7 +24,7 @@ impl bevy::app::Plugin for Plugin {
                     load_other_level,
                     change_level_cheats,
                     undo_the_level,
-                ),
+                ).run_if(in_state(GameStates::Next)),
             );
     }
 }
@@ -203,7 +203,7 @@ pub struct UpdateLevel;
 fn spawn_level(
     mut commands: Commands,
     // resource
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut total_bread_count: ResMut<TotalBreadCount>,
@@ -222,7 +222,7 @@ fn spawn_level(
         spawn_sprites(
             &mut commands,
             &level.0,
-            &asset_server,
+            &image_assets,
             level_index.0,
             &mut bread_count,
             &mut events,
@@ -242,7 +242,7 @@ fn update_level(
     // add the objects that won't be despawn to the filter
     object_query: Query<Entity, (With<Object>, Without<CommonDuck>, Without<ArrowHint>)>,
     // resource
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     level: Res<Level>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
@@ -261,7 +261,7 @@ fn update_level(
         spawn_sprites(
             &mut commands,
             &level.0,
-            &asset_server,
+            &image_assets,
             level_index.0,
             &mut bread_count,
             &mut events,
@@ -311,9 +311,9 @@ fn spawn_duck(
     commands: &mut Commands,
     position: Vec3,
     sprite: Handle<Image>,
+    click_hint: Handle<Image>,
     logic_position: (usize, usize),
     level_index: usize,
-    asset_server: &Res<AssetServer>,
     is_stuffed: bool,
     can_move: bool,
 ) {
@@ -340,7 +340,7 @@ fn spawn_duck(
         spawn_upper_object(
             commands,
             Vec3::new(position.x + 120.0, position.y - 120.0, 1.0),
-            asset_server.load("sprites/click_hint.png"),
+            click_hint,
         );
     }
 }
@@ -348,7 +348,7 @@ fn spawn_duck(
 fn spawn_sprites(
     commands: &mut Commands,
     level: &[Vec<char>],
-    asset_server: &Res<AssetServer>,
+    image_assets: &Res<ImageAssets>,
     level_index: usize,
     bread_count: &mut ResMut<BreadCount>,
     // event
@@ -376,39 +376,39 @@ fn spawn_sprites(
 
             match object_type {
                 SymbolType::Wall => {
-                    spawn_object(commands, position, asset_server.load("sprites/wall.png"));
+                    spawn_object(commands, position, image_assets.wall.clone());
                 }
                 SymbolType::Ice => {
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    spawn_object(commands, position, image_assets.ice.clone());
                 }
                 SymbolType::BrokenIce => {
-                    spawn_object(commands, position, asset_server.load("sprites/water.png"));
+                    spawn_object(commands, position, image_assets.water.clone());
                 }
                 SymbolType::DuckOnIce => {
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    spawn_object(commands, position, image_assets.ice.clone());
                     if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
-                            asset_server.load("sprites/duck.png"),
+                            image_assets.duck.clone(),
+                            image_assets.click_hint.clone(),
                             (row_index, col_index),
                             level_index,
-                            asset_server,
                             false,
                             true,
                         );
                     }
                 }
                 SymbolType::StuffedDuckOnIce => {
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
+                    spawn_object(commands, position, image_assets.ice.clone());
                     if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
-                            asset_server.load("sprites/stuffed_duck.png"),
+                            image_assets.stuffed_duck.clone(),
+                            image_assets.click_hint.clone(),
                             (row_index, col_index),
                             level_index,
-                            asset_server,
                             true,
                             true,
                         );
@@ -416,26 +416,26 @@ fn spawn_sprites(
                 }
                 SymbolType::BreadOnIce => {
                     bread_count.0 += 1;
-                    spawn_object(commands, position, asset_server.load("sprites/ice.png"));
-                    spawn_upper_object(commands, position, asset_server.load("sprites/bread.png"));
+                    spawn_object(commands, position, image_assets.ice.clone());
+                    spawn_upper_object(commands, position, image_assets.bread.clone());
                 }
                 SymbolType::BreakingIce => {
                     spawn_object(
                         commands,
                         position,
-                        asset_server.load("sprites/breaking_ice.png"),
+                        image_assets.breaking_ice.clone(),
                     );
                 }
                 SymbolType::DuckOnWater => {
-                    spawn_object(commands, position, asset_server.load("sprites/water.png"));
+                    spawn_object(commands, position, image_assets.water.clone());
                     if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
-                            asset_server.load("sprites/stuffed_duck.png"),
+                            image_assets.stuffed_duck.clone(),
+                            image_assets.click_hint.clone(),
                             (row_index, col_index),
                             level_index,
-                            asset_server,
                             true,
                             false,
                         );
@@ -445,16 +445,16 @@ fn spawn_sprites(
                     spawn_object(
                         commands,
                         position,
-                        asset_server.load("sprites/breaking_ice.png"),
+                        image_assets.breaking_ice.clone(),
                     );
                     if should_respawn_duck {
                         spawn_duck(
                             commands,
                             position,
-                            asset_server.load("sprites/duck.png"),
+                            image_assets.duck.clone(),
+                            image_assets.click_hint.clone(),
                             (row_index, col_index),
                             level_index,
-                            asset_server,
                             false,
                             true,
                         );
@@ -493,7 +493,7 @@ fn level_restart(
     ui_query: Query<Entity, With<ui::MutUI>>,
     // resource
     input: Res<ButtonInput<KeyCode>>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
     level_index: Res<CurrentLevelIndex>,
@@ -514,7 +514,7 @@ fn level_restart(
         }
         spawn_level(
             commands,
-            asset_server,
+            image_assets,
             level_index,
             bread_count,
             total_bread_count,
@@ -532,7 +532,7 @@ fn load_other_level(
     object_query: Query<Entity, With<Object>>,
     // resource
     level_index: Res<CurrentLevelIndex>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     bread_count: ResMut<BreadCount>,
     total_bread_count: ResMut<TotalBreadCount>,
     levels: Res<Levels>,
@@ -548,7 +548,7 @@ fn load_other_level(
         }
         spawn_level(
             commands,
-            asset_server,
+            image_assets,
             level_index,
             bread_count,
             total_bread_count,
@@ -586,7 +586,7 @@ fn undo_the_level(
     input: Res<ButtonInput<KeyCode>>,
     mut level_stack: ResMut<LevelStack>,
     mut bread_sum_record_stack: ResMut<BreadSumRecordStack>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     level_index: Res<CurrentLevelIndex>,
     mut bread_count: ResMut<BreadCount>,
     mut level: ResMut<Level>,
@@ -605,7 +605,7 @@ fn undo_the_level(
         spawn_sprites(
             &mut commands,
             &level.0,
-            &asset_server,
+            &image_assets,
             level_index.0,
             &mut bread_count,
             &mut events,

@@ -15,7 +15,7 @@ impl bevy::app::Plugin for Plugin {
                 player_movement,
                 component_animator_system::<Transform>,
                 shake_other_ducks_in_direction,
-            ),
+            ).run_if(in_state(GameStates::Next)),
         )
         .add_event::<ShakeOtherDucksInDir>();
     }
@@ -95,6 +95,7 @@ fn player_movement(
     key_board_input: Res<ButtonInput<KeyCode>>,
     level: ResMut<level::Level>,
     asset_server: Res<AssetServer>,
+    audio_assets: Res<AudioAssets>,
 ) {
     if let Ok((transform, mut sprite, mut image, c_duck, entity)) = player_query.get_single_mut() {
         let duck: &mut dyn Duck = c_duck.unwrap().into_inner();
@@ -139,7 +140,7 @@ fn player_movement(
             if duck_bread_sum_after > duck_bread_sum_before {
                 // play eat sound
                 events_sfx.send(PlaySFX {
-                    path: "audio/eat.ogg".to_string(),
+                    source: audio_assets.eat.clone(),
                     volume: bevy::audio::Volume::new(0.05),
                 });
             }
@@ -151,7 +152,7 @@ fn player_movement(
             if duck_can_move_before && !duck_can_move_after {
                 // play ice breaking sound
                 events_sfx.send(PlaySFX {
-                    path: "audio/ice_breaking.ogg".to_string(),
+                    source: audio_assets.ice_breaking.clone(),
                     volume: bevy::audio::Volume::new(0.4),
                 });
             }
@@ -195,7 +196,7 @@ fn player_movement(
 
             // play quark sound
             events_sfx.send(PlaySFX {
-                path: "audio/quark.ogg".to_string(),
+                source: audio_assets.quark.clone(),
                 volume: bevy::audio::Volume::new(0.4),
             });
             events_print.send(level::PrintLevel);

@@ -6,22 +6,21 @@ pub struct Plugin;
 
 #[derive(Event, Default)]
 pub struct PlaySFX {
-    pub path: String,
+    pub source: Handle<AudioSource>,
     pub volume: Volume,
 }
 
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, play_bgm)
+        app.add_systems(OnEnter(GameStates::Next), play_bgm)
             .add_event::<PlaySFX>()
-            .add_systems(Update, play_sfx);
+            .add_systems(Update, play_sfx.run_if(in_state(GameStates::Next)));
     }
 }
 
-fn play_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn play_bgm(mut commands: Commands, audio_assets: Res<AudioAssets>) {
     commands.spawn(AudioBundle {
-        source: asset_server.load("audio/bgm.ogg"),
-        // source: asset_server.load("audio/Doc.ogg"),
+        source: audio_assets.bgm.clone(),
         settings: PlaybackSettings {
             mode: PlaybackMode::Loop,
             volume: Volume::new(0.03),
@@ -30,14 +29,10 @@ fn play_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-pub fn play_sfx(
-    mut events: EventReader<PlaySFX>,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+pub fn play_sfx(mut events: EventReader<PlaySFX>, mut commands: Commands) {
     for event in events.read() {
         commands.spawn(AudioBundle {
-            source: asset_server.load(event.path.clone()),
+            source: event.source.clone(),
             settings: PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 volume: event.volume,

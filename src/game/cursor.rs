@@ -7,8 +7,8 @@ pub struct Plugin;
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPosition>()
-            .add_systems(Update, get_cursor_position)
-            .add_systems(Update, click_detection);
+            .add_systems(Update, get_cursor_position.run_if(in_state(GameStates::Next)))
+            .add_systems(Update, click_detection.run_if(in_state(GameStates::Next)));
     }
 }
 
@@ -23,7 +23,7 @@ pub struct CursorPosition(pub Vec2);
 fn get_cursor_position(
     mut commands: Commands,
     // resource
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     mut cursor_position: ResMut<CursorPosition>,
     // query
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -61,7 +61,7 @@ fn get_cursor_position(
                             rotation: Quat::IDENTITY,
                             scale: Vec3::new(1.0 * RESIZE, 1.0 * RESIZE, 1.0),
                         },
-                        texture: asset_server.load("sprites/arrow.png"),
+                        texture: image_assets.arrow.clone(),
                         ..default()
                     },
                     ArrowHint,
@@ -82,7 +82,7 @@ pub fn click_detection(
     arrow_hint_query: Query<Entity, (With<ArrowHint>, With<Parent>)>,
     // resource
     cursor_position: Res<CursorPosition>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
 ) {
     for event in mouse_button_input_events.read() {
         if event.button == MouseButton::Left {
@@ -103,7 +103,7 @@ pub fn click_detection(
                                         translation: Vec3::new(0.0, 500.0, 1.0),
                                         ..default()
                                     },
-                                    texture: asset_server.load("sprites/arrow.png"),
+                                    texture: image_assets.arrow.clone(),
                                     ..default()
                                 },
                                 ArrowHint,
